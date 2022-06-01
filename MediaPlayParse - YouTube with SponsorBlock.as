@@ -1,4 +1,4 @@
-﻿/*
+/*
 	YouTube media parse
 */
 
@@ -19,6 +19,18 @@
 // array<dictionary> PlayitemParse(const string &in)	-> parse playitem
 // bool PlaylistCheck(const string &in)					-> check playlist
 // array<dictionary> PlaylistParse(const string &in)	-> parse playlist
+
+array<dictionary> lastQualityList;
+
+dictionary lastMetaData;
+
+string lastUrl;
+
+string last_final_url;
+
+uint lastTime;
+
+//------------------------------------------------------------------------------------------------
 
 string GetTitle()
 {
@@ -45,6 +57,7 @@ string YOUTUBE_URL2					= "://www.youtube.com/v/";
 string YOUTUBE_URL3					= "://www.youtube.com/embed/";
 string YOUTUBE_URL4					= "://www.youtube.com/attribution_link?a=";
 string YOUTUBE_URL5					= "://www.youtube.com/shorts";
+string YOUTUBE_URL6					= "://www.youtube.com/clip";
 string YOUTU_BE_URL1				= "://youtu.be/";
 string YOUTU_BE_URL2				= "://youtube.com/";
 string YOUTU_BE_URL3				= "://m.youtube.com/";
@@ -365,6 +378,60 @@ class QualityListItem
 	}
 };
 
+void SaveCache(string url, array<dictionary> &QualityList, dictionary &MetaData, string final_url)
+{
+	if (url.empty()) return;
+
+	if (@QualityList is null) return;
+
+	if (lastUrl == url) return;
+
+	lastUrl = url;
+
+	lastQualityList.resize(0);
+
+	for (int i = 0; i < QualityList.size(); i++)
+	{
+		dictionary item = QualityList[i];
+		lastQualityList.insertLast(item);
+	}
+
+	if (@MetaData !is null)
+	{
+		lastMetaData = MetaData;
+	}
+
+	last_final_url = final_url;
+
+	lastTime = HostGetTickCount();
+}
+
+string LoadCache(string url, array<dictionary> &QualityList, dictionary &MetaData)
+{
+	if ((HostGetTickCount() - lastTime) > 3600000) return "";
+
+	if (url.empty()) return "";
+
+	if (@QualityList is null) return "";
+
+	if (lastUrl != url) return "";
+
+	QualityList.resize(0);
+
+	for (int i = 0; i < lastQualityList.size(); i++)
+	{
+		dictionary item = lastQualityList[i];
+		QualityList.insertLast(item);
+	}
+
+	if (@MetaData !is null)
+	{
+		MetaData = lastMetaData;
+	}
+
+	return last_final_url;
+}
+
 void AppendQualityList(array<dictionary> &QualityList, QualityListItem &item, string url)
 {
 	YOUTUBE_PROFILES pPro = getProfile(item.itag, true);
@@ -502,6 +569,19 @@ string RepleaceYouTubeUrl(string url)
 	if (url.find(YOUTU_BE_URL3) >= 0) url.replace(YOUTU_BE_URL3, YOUTUBE_MP_URL);
 	if (url.find(YOUTU_BE_URL4) >= 0) url.replace(YOUTU_BE_URL4, YOUTUBE_MP_URL);
 	if (url.find(YOUTU_BE_URL5) >= 0) url.replace(YOUTU_BE_URL5, YOUTUBE_MP_URL);
+	
+	if (url.find(YOUTUBE_URL2) >= 0 || url.find(YOUTUBE_URL3) >= 0 || url.find(YOUTUBE_URL4) >= 0 || url.find(YOUTUBE_URL5) >= 0 || url.find(YOUTUBE_URL6) >= 0)
+	{
+		int p = url.rfind("/");
+
+		if (p >= 0)
+		{
+			string id = url.substr(p + 1);
+
+			url = "http" + YOUTUBE_URL + "v=" + id;
+		}
+	}
+	
 	return url;
 }
 
@@ -860,6 +940,7 @@ string SignatureDecode(string url, string signature, string append, string data,
 		if (url.find(YOUTUBE_URL3) >= 0) return true;
 		if (url.find(YOUTUBE_URL4) >= 0) return true;
 		if (url.find(YOUTUBE_URL5) >= 0) return true;
+		if (url.find(YOUTUBE_URL6) >= 0) return true;		
 		return false;
 	}
 	if (url.find(YOUTUBE_URL) >= 0 || url.find(YOUTU_BE_URL1) >= 0 || url.find(YOUTU_BE_URL2) >= 0 || url.find(YOUTU_BE_URL3) >= 0 || url.find(YOUTU_BE_URL4) >= 0 || url.find(YOUTU_BE_URL5) >= 0)
@@ -974,12 +1055,16 @@ string GetVideoJson(string videoId, bool passAge)
 	string postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"16.20\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
 	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"16.20\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
 
-	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "Mozilla/5.0 (Windows NT 6.1))", Headers, passAge ? postData2 : postData, true);
+	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", "Mozilla/5.0 (Windows NT 6.1))", Headers, passAge ? postData2 : postData, true);
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList)
 {
 //HostOpenConsole();
+
+	string final_url = LoadCache(path, QualityList, MetaData);
+
+	if (!final_url.empty()) return final_url;
 
 	if (PlayitemCheck(path))
 	{
@@ -989,17 +1074,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		array<int> JSFuncArgs;
 
 		tmp_fn.MakeLower();
-		if (tmp_fn.find(YOUTUBE_URL2) >= 0 || tmp_fn.find(YOUTUBE_URL3) >= 0 || tmp_fn.find(YOUTUBE_URL4) >= 0 || tmp_fn.find(YOUTUBE_URL5) >= 0)
-		{
-			int p = fn.rfind("/");
-
-			if (p >= 0)
-			{
-				string id = fn.substr(p + 1);
-
-				fn = "http" + YOUTUBE_URL + "v=" + id;
-			}
-		}
+		if (tmp_fn.find(YOUTUBE_URL2) >= 0 || tmp_fn.find(YOUTUBE_URL3) >= 0 || tmp_fn.find(YOUTUBE_URL4) >= 0 || tmp_fn.find(YOUTUBE_URL5) >= 0 || tmp_fn.find(YOUTUBE_URL6) >= 0) fn = RepleaceYouTubeUrl(fn);
 
 		int iYoutubeTag = 22;
 		YOUTUBE_PROFILES youtubeSets = getProfile(iYoutubeTag);
@@ -2069,6 +2144,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			}
 
 			if (@MetaData !is null) MetaData["fileExt"] = final_ext;
+			SaveCache(path, QualityList, MetaData, final_url);
 			return final_url;
 		}
 	}
