@@ -20,18 +20,6 @@
 // bool PlaylistCheck(const string &in)					-> check playlist
 // array<dictionary> PlaylistParse(const string &in)	-> parse playlist
 
-array<dictionary> lastQualityList;
-
-dictionary lastMetaData;
-
-string lastUrl;
-
-string last_final_url;
-
-uint lastTime;
-
-//------------------------------------------------------------------------------------------------
-
 string GetTitle()
 {
 	return "YouTube with SponsorBlock support";
@@ -377,60 +365,6 @@ class QualityListItem
 		return ret;
 	}
 };
-
-void SaveCache(string url, array<dictionary> &QualityList, dictionary &MetaData, string final_url)
-{
-	if (url.empty()) return;
-
-	if (@QualityList is null) return;
-
-	if (lastUrl == url) return;
-
-	lastUrl = url;
-
-	lastQualityList.resize(0);
-
-	for (int i = 0; i < QualityList.size(); i++)
-	{
-		dictionary item = QualityList[i];
-		lastQualityList.insertLast(item);
-	}
-
-	if (@MetaData !is null)
-	{
-		lastMetaData = MetaData;
-	}
-
-	last_final_url = final_url;
-
-	lastTime = HostGetTickCount();
-}
-
-string LoadCache(string url, array<dictionary> &QualityList, dictionary &MetaData)
-{
-	if ((HostGetTickCount() - lastTime) > 3600000) return "";
-
-	if (url.empty()) return "";
-
-	if (@QualityList is null) return "";
-
-	if (lastUrl != url) return "";
-
-	QualityList.resize(0);
-
-	for (int i = 0; i < lastQualityList.size(); i++)
-	{
-		dictionary item = lastQualityList[i];
-		QualityList.insertLast(item);
-	}
-
-	if (@MetaData !is null)
-	{
-		MetaData = lastMetaData;
-	}
-
-	return last_final_url;
-}
 
 void AppendQualityList(array<dictionary> &QualityList, QualityListItem &item, string url)
 {
@@ -1061,10 +995,6 @@ string GetVideoJson(string videoId, bool passAge)
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList)
 {
 //HostOpenConsole();
-
-	string final_url = LoadCache(path, QualityList, MetaData);
-
-	if (!final_url.empty()) return final_url;
 
 	if (PlayitemCheck(path))
 	{
@@ -2144,7 +2074,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			}
 
 			if (@MetaData !is null) MetaData["fileExt"] = final_ext;
-			SaveCache(path, QualityList, MetaData, final_url);
 			return final_url;
 		}
 	}
