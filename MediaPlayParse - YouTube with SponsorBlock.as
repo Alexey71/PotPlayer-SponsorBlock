@@ -1215,14 +1215,41 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 		string final_url, final_url2;
 		string final_ext;
-		if (hlsmpd_len > 0)
+		if (adaptive_fmts_start <= 0 && dashmpd_len > 0)
 		{
-			string str = WebData.substr(hlsmpd_start, hlsmpd_len);
+			string url = WebData.substr(dashmpd_start, dashmpd_len);
 
-			string url = HostUrlDecode(HostUrlDecode(str));
+			url = HostUrlDecode(HostUrlDecode(url));
 			url.replace("\\/", "/");
 			url = CorrectURL(url);
+			if (url.find("/s/") > 0)
+			{
+				string tmp = url;
+				string signature = HostRegExpParse(tmp, "/s/([0-9A-Z]+.[0-9A-Z]+)");
 
+				if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, js_data, JSFuncs, JSFuncArgs);
+			}
+			url = url + "?ForceBHD";
+			final_url = url;
+			final_ext = "mp4";
+
+			//if (@MetaData !is null) MetaData["chatUrl"] = "https://www.youtube.com/live_chat?v=" + videoId + "&is_popout=1";
+		}
+		else if (hlsmpd_len > 0)
+		{
+			string url = WebData.substr(hlsmpd_start, hlsmpd_len);					
+
+			url = HostUrlDecode(HostUrlDecode(url));
+			url.replace("\\/", "/");
+			url = CorrectURL(url);
+			if (url.find("/s/") > 0)
+			{
+				string tmp = url;
+				string signature = HostRegExpParse(tmp, "/s/([0-9A-Z]+.[0-9A-Z]+)");
+
+				if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, js_data, JSFuncs, JSFuncArgs);
+			}
+			url = url + "?ForceBHD";
 			final_url = url;
 			final_ext = "mp4";
 
@@ -1513,124 +1540,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 					}
 				}
 			}
-
-			string DashMPD;
-			if (adaptive_fmts_start <= 0 && dashmpd_len > 0) DashMPD = WebData.substr(dashmpd_start, dashmpd_len); // dash 포멧 이라면.. ㄷㄷㄷ
-			if (!DashMPD.empty())
-			{
-				DashMPD = HostUrlDecode(HostUrlDecode(DashMPD));
-				DashMPD.replace("\\/", "/");
-				DashMPD = CorrectURL(DashMPD);
-				if (DashMPD.find("/s/") > 0)
-				{
-					string tmp = DashMPD;
-					string signature = HostRegExpParse(tmp, "/s/([0-9A-Z]+.[0-9A-Z]+)");
-
-					if (!signature.empty()) DashMPD = SignatureDecode(tmp, signature, "/signature/", WebData, js_data, JSFuncs, JSFuncArgs);
-				}
-				string xml = HostUrlGetString(DashMPD, GetUserAgent());
-				XMLDocument dxml;
-				if (dxml.Parse(xml))
-				{
-					XMLElement Root = dxml.RootElement();
-
-					if (Root.isValid() && Root.Name() == "MPD")
-					{
-						XMLElement Period = Root.FirstChildElement("Period");
-
-						if (Period.isValid())
-						{
-							string type = XMLAttrValue(Root, "type");
-							type.MakeLower();
-							if (type == "dynamic")
-							{
-								final_url = DashMPD + "?ForceDashLive";
-								final_ext = "mp4";
-								if (@QualityList !is null) QualityList.resize(0);
-							}
-							else
-							{
-								XMLElement AdaptationSet = Period.FirstChildElement("AdaptationSet");
-								while (AdaptationSet.isValid())
-								{
-									string mimeType = XMLAttrValue(AdaptationSet, "mimeType");
-									XMLElement Representation = AdaptationSet.FirstChildElement("Representation");
-
-									while (Representation.isValid())
-									{
-										bool Skip = false;
-										XMLElement SegmentList = Representation.FirstChildElement("SegmentList");
-
-										if (SegmentList.isValid())
-										{
-											XMLElement Initialization = SegmentList.FirstChildElement("Initialization");
-
-											if (Initialization.isValid())
-											{
-												string sourceURL = XMLAttrValue(Initialization, "sourceURL");
-
-												if (sourceURL == "sq/0") Skip = true; // 이건 지원이 않된다..
-											}
-										}
-										if (!Skip)
-										{
-											XMLElement BaseURL = Representation.FirstChildElement("BaseURL");
-
-											if (BaseURL.isValid())
-											{
-												string url = BaseURL.asString();
-
-												if (!url.empty())
-												{
-													int itag = parseInt(XMLAttrValue(Representation, "id"));
-
-													if (itag > 0)
-													{
-														string codecs = XMLAttrValue(Representation, "codecs");
-														string width = XMLAttrValue(Representation, "width");
-														string height = XMLAttrValue(Representation, "height");
-														string frameRate = XMLAttrValue(Representation, "frameRate");
-														string bandwidth = XMLAttrValue(Representation, "bandwidth");
-														string format = mimeType + "/" + codecs;
-														QualityListItem item;
-
-														item.itag = itag;
-														item.format = GetCodecName(format);
-														if (!width.empty() && !height.empty())
-														{
-															int w = parseInt(width);
-															int h = parseInt(height);
-
-															if (w > 0 && h > 0) item.resolution = width + "x" + height;
-														}
-														if (!frameRate.empty())
-														{
-															double fps = parseFloat(frameRate);
-
-															if (fps > 0) item.fps = fps;
-														}
-														if (!bandwidth.empty())
-														{
-															int bit = parseInt(bandwidth);
-
-															item.bitrate = GetBitrateString(bit);
-														}
-														if (@QualityList !is null) AppendQualityList(QualityList, item, url);
-														if (SelectBestProfile(final_itag, final_ext, itag, youtubeSets)) final_url = url;
-														if (SelectBestProfile2(final_itag, final_ext, itag, youtubeSets)) final_url2 = url;
-													}
-												}
-											}
-										}
-										Representation = Representation.NextSiblingElement();
-									}
-									AdaptationSet = AdaptationSet.NextSiblingElement();
-								}
-							}
-						}
-					}
-				}
-			}
 		}
 
 		if (final_url.empty()) final_url = final_url2;
@@ -1700,6 +1609,30 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 						JsonValue viewCount = videoDetails["viewCount"];
 						if (viewCount.isString()) MetaData["viewCount"] = viewCount.asString();
+
+						JsonValue thumbnail = videoDetails["thumbnail"];
+						if (thumbnail.isObject())
+						{
+							JsonValue thumbnails = thumbnail["thumbnails"];
+							if (thumbnails.isArray())
+							{
+								for (int j = 0, len = thumbnails.size(); j < len; j++)
+								{
+									JsonValue it = thumbnails[j];
+									
+									if (it.isObject())
+									{
+										JsonValue url = it["url"];
+
+										if (url.isString())
+										{
+											MetaData["thumbnail"] = url.asString();
+											break;
+										}
+									}
+								}
+							}
+						}
 					}
 
 					JsonValue microformat = Root["microformat"];
