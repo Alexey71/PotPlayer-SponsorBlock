@@ -1023,11 +1023,11 @@ string GetJsonCode(string data, string code, int pos = 0)
 
 string GetVideoJson(string videoId, bool passAge)
 {
-	string Headers = "X-YouTube-Client-Name: 3\r\nX-YouTube-Client-Version: 18.11.34\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
-	string postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"18.11.34\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
-	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"18.11.34\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
+	string Headers = "X-YouTube-Client-Name: 3\r\nX-YouTube-Client-Version: 19.09.37\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
+	string postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"19.09.37\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
+	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"19.09.37\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
 	
-	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.android.youtube/18.11.34 (Linux; U; Android 11) gzip", Headers, passAge ? postData2 : postData, true);
+	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip", Headers, passAge ? postData2 : postData, true);
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList)
@@ -1409,7 +1409,11 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 											if (p > 0) item.audioCode = item.audioCode.Left(p);
 										}
 									}
-									if (url.isString()) item.url = url.asString();
+									if (url.isString())
+									{
+										item.url = url.asString();
+										if (item.url.find("xtags=drc") > 0) continue;
+									}
 									else if (cipher.isString() || signatureCipher.isString())
 									{
 										string u, signature, sigName = "signature";
