@@ -902,7 +902,7 @@ string SignatureDecode(string url, string signature, string append, string data,
 	return url;
 }
 
- bool PlayerYouTubeCheck(string url)
+bool PlayerYouTubeCheck(string url)
 {
 	url.MakeLower();
 	if (url.find(YOUTUBE_MP_URL) >= 0 && (url.find("watch?") < 0 || url.find("playlist?") >= 0 || url.find("&list=") >= 0))
@@ -2108,7 +2108,7 @@ bool PlaylistCheck(const string &in path)
 		int p = url.find(YOUTUBE_MP_URL);
 
 		url.erase(p, YOUTUBE_MP_URL.size());
-		if (url.find("/") >= 0 || url.find("?") >= 0 || url.find("&") >= 0) return true;
+		if (url.find("/") >= 0 || url.find("?list=") >= 0 || url.find("&") >= 0) return true;
 	}
 
 	return false;
@@ -2495,6 +2495,9 @@ array<dictionary> PlaylistParse(const string &in path)
 			}
 		}
 
+		url = RepleaceYouTubeUrl(url);
+		url = MakeYouTubeUrl(url);
+		
 		string pid = HostRegExpParse(url, "list=([-a-zA-Z0-9_]+)");
 		string vid = GetVideoID(url);
 
