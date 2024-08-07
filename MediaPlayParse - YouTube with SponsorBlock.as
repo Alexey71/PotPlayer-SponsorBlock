@@ -1023,11 +1023,11 @@ string GetJsonCode(string data, string code, int pos = 0)
 
 string GetVideoJson(string videoId, bool passAge)
 {
-	string Headers = "X-YouTube-Client-Name: 3\r\nX-YouTube-Client-Version: 19.09.37\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
-	string postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"19.09.37\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
-	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"19.09.37\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
+	string Headers = "X-YouTube-Client-Name: 3\r\nX-YouTube-Client-Version: 19.29.37\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
+	string postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"19.29.37\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
+	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"19.29.37\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
 	
-	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip", Headers, passAge ? postData2 : postData, true);
+	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.android.youtube/19.29.37 (Linux; U; Android 11) gzip", Headers, passAge ? postData2 : postData, true);
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList)
@@ -1187,8 +1187,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		// dash mainfest mpd
 		if (dashmpd_start <= 0 && (dashmpd_start = WebData.find(MATCH_DASHMPD_START)) >= 0)
 		{
-			dashmpd_start += MATCH_DASHMPD_START.size();
-			dashmpd_len = WebData.find(MATCH_END2, dashmpd_start + 10);
+			dashmpd_start += MATCH_DASHMPD_START.size() + 2;
+			dashmpd_len = WebData.find(MATCH_END, dashmpd_start + 10);
+			if (dashmpd_len > 0) dashmpd_len += 10;
+			else dashmpd_len = WebData.size();
 			dashmpd_len -= dashmpd_start;
 		}
 
@@ -1196,8 +1198,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		// hls live streaming
 		if (hlsmpd_start <= 0 && (hlsmpd_start = WebData.find(MATCH_HLSMPD_START)) >= 0)
 		{
-			hlsmpd_start += MATCH_HLSMPD_START.size();
-			hlsmpd_len = WebData.find(MATCH_END2, hlsmpd_start + 10);
+			hlsmpd_start += MATCH_HLSMPD_START.size() + 2;
+			hlsmpd_len = WebData.find(MATCH_END, hlsmpd_start + 10);
+			if (hlsmpd_len > 0) hlsmpd_len += 10;
+			else hlsmpd_len = WebData.size();
 			hlsmpd_len -= hlsmpd_start;
 		}
 
@@ -1253,29 +1257,49 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 		string final_url, final_url2;
 		string final_ext;
-		if (adaptive_fmts_start <= 0 && (dashmpd_len > 0 && hlsmpd_len > 0)) // 일단 live만 mpd 지원되게 하자...
+		JsonReader Reader;
+		JsonValue Root;
+		bool okJson = !player_response_jsonData.empty() && Reader.parse(player_response_jsonData, Root) && Root.isObject();
+		if (okJson)
 		{
-			string url = WebData.substr(dashmpd_start, dashmpd_len);
-
-			url = HostUrlDecode(HostUrlDecode(url));
-			url.replace("\\/", "/");
-			url = CorrectURL(url);
-			if (url.find("/s/") > 0)
+			if (@MetaData !is null)
 			{
-				string tmp = url;
-				string signature = HostRegExpParse(tmp, "/s/([0-9A-Z]+.[0-9A-Z]+)");
-
-				if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, js_data, JSFuncs, JSFuncArgs);
+				JsonValue playabilityStatus = Root["playabilityStatus"];
+				if (playabilityStatus.isObject())
+				{
+					JsonValue status = playabilityStatus["status"];
+					if (status.isString() && status.asString() != "OK")
+					{
+						if (error_message.empty())
+						{
+							JsonValue reason = playabilityStatus["reason"];
+							if (reason.isString()) MetaData["errorMessage"] = reason.asString();
+						}
+						else MetaData["errorMessage"] = error_message;
+					}
+				}
 			}
-			url = url + "?ForceBHD";
-			final_url = url;
-			final_ext = "mp4";
-
-			//if (@MetaData !is null) MetaData["chatUrl"] = "https://www.youtube.com/live_chat?v=" + videoId + "&is_popout=1";
 		}
-		else if (hlsmpd_len > 0)
+
+		bool isDash = adaptive_fmts_start <= 0 && (dashmpd_len > 0 && hlsmpd_len > 0); // 일단 live만 mpd 지원되게 하자...
+		if (isDash || hlsmpd_len > 0)
 		{
-			string url = WebData.substr(hlsmpd_start, hlsmpd_len);					
+			string url;
+
+			if (okJson)
+			{
+				JsonValue streamingData = Root["streamingData"];
+				if (streamingData.isObject())
+				{
+					JsonValue streamingUrl = streamingData[isDash ? "dashManifestUrl" : "hlsManifestUrl"];
+					if (streamingUrl.isString()) url = streamingUrl.asString();
+				}
+			}
+			if (url.empty())
+			{
+				if (isDash) url = WebData.substr(dashmpd_start, dashmpd_len);
+				else url = WebData.substr(hlsmpd_start, hlsmpd_len);
+			}
 
 			url = HostUrlDecode(HostUrlDecode(url));
 			url.replace("\\/", "/");
@@ -1297,29 +1321,9 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		{
 			int final_itag = 0;
 			bool IsOK = false;
-			JsonReader Reader;
-			JsonValue Root;
 
-			if (!player_response_jsonData.empty() && Reader.parse(player_response_jsonData, Root) && Root.isObject())
-			{
-				if (@MetaData !is null)
-				{
-					JsonValue playabilityStatus = Root["playabilityStatus"];
-					if (playabilityStatus.isObject())
-					{
-						JsonValue status = playabilityStatus["status"];
-						if (status.isString() && status.asString() != "OK")
-						{
-							if (error_message.empty())
-							{
-								JsonValue reason = playabilityStatus["reason"];
-								if (reason.isString()) MetaData["errorMessage"] = reason.asString();
-							}
-							else MetaData["errorMessage"] = error_message;
-						}
-					}
-				}
-
+			if (okJson)
+			{		
 				JsonValue streamingData = Root["streamingData"];
 				if (streamingData.isObject())
 				{
