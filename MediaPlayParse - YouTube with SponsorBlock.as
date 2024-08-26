@@ -430,6 +430,8 @@ void AppendQualityList(array<dictionary> &QualityList, QualityListItem &item, st
 			}
 		}
 		else Detail = true;
+		string Quality = item.quality;
+		string QualityDetail = item.qualityDetail;
 		if (Detail && !item.bitrate.empty()) item.quality = item.bitrate + ", " + item.quality;
 
 		bool Res = false;
@@ -438,6 +440,7 @@ void AppendQualityList(array<dictionary> &QualityList, QualityListItem &item, st
 			item.qualityDetail = item.quality;
 			Res = true;
 		}
+		else if (Detail && !Quality.empty() && item.qualityDetail != Quality) item.qualityDetail += "(" + Quality + ")";
 		if (Detail)
 		{
 			bool add = true;
@@ -452,6 +455,11 @@ void AppendQualityList(array<dictionary> &QualityList, QualityListItem &item, st
 				else item.qualityDetail = item.resolution;
 			}
 			if (add && !item.bitrate.empty()) item.qualityDetail = item.bitrate + ", " + item.qualityDetail;
+			if (!QualityDetail.empty())
+			{
+				item.quality = QualityDetail;
+				if (!item.bitrate.empty()) item.quality = item.bitrate + ", " + item.quality;
+			}
 		}
 		for (int i = 0; i < QualityList.size(); i++)
 		{
