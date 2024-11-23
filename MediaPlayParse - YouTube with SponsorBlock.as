@@ -1031,11 +1031,11 @@ string GetJsonCode(string data, string code, int pos = 0)
 
 string GetVideoJson(string videoId, bool passAge)
 {
-	string Headers = "X-YouTube-Client-Name: 3\r\nX-YouTube-Client-Version: 19.29.37\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
-	string postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"19.29.37\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
-	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"19.29.37\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"CgIQBg==\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
+	string Headers = "X-YouTube-Client-Name: 5\r\nX-YouTube-Client-Version: 19.45.4\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
+	string postData = "{\"context\": {\"client\": {\"clientName\": \"IOS\", \"clientVersion\": \"19.45.4\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
+	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"IOS\", \"clientVersion\": \"19.45.4\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
 	
-	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.android.youtube/19.29.37 (Linux; U; Android 11) gzip", Headers, passAge ? postData2 : postData, true);
+	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1_0 like Mac OS X;)", Headers, passAge ? postData2 : postData, true);
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList)
