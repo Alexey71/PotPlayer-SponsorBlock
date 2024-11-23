@@ -1031,11 +1031,11 @@ string GetJsonCode(string data, string code, int pos = 0)
 
 string GetVideoJson(string videoId, bool passAge)
 {
-	string Headers = "X-YouTube-Client-Name: 5\r\nX-YouTube-Client-Version: 19.45.4\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
-	string postData = "{\"context\": {\"client\": {\"clientName\": \"IOS\", \"clientVersion\": \"19.45.4\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
-	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"IOS\", \"clientVersion\": \"19.45.4\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
+	string Headers = "X-YouTube-Client-Name: 28\r\nX-YouTube-Client-Version: 1.60.19\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
+	string postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
+	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
 	
-	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1_0 like Mac OS X;)", Headers, passAge ? postData2 : postData, true);
+	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip", Headers, passAge ? postData2 : postData, true);
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList)
