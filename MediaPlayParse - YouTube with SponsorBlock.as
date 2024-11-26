@@ -58,8 +58,8 @@ string MATCH_STREAM_MAP_START		= "\"url_encoded_fmt_stream_map\"";
 string MATCH_STREAM_MAP_START2		= "url_encoded_fmt_stream_map=";
 string MATCH_ADAPTIVE_FMTS_START	= "\"adaptive_fmts\"";
 string MATCH_ADAPTIVE_FMTS_START2	= "adaptive_fmts=";
-string MATCH_HLSMPD_START			= "hlsManifestUrl";
-string MATCH_DASHMPD_START			= "dashManifestUrl";
+string MATCH_HLSMPD_START			= "\"hlsManifestUrl\"";
+string MATCH_DASHMPD_START			= "\"dashManifestUrl\"";
 string MATCH_WIDTH_START			= "meta property=\"og:video:width\" content=\"";
 string MATCH_JS_START				= "\"js\":";
 string MATCH_JS_START_2             = "'PREFETCH_JS_RESOURCES': [\"";
@@ -1029,13 +1029,59 @@ string GetJsonCode(string data, string code, int pos = 0)
 	return "";
 }
 
-string GetVideoJson(string videoId, bool passAge)
+string GetVideoJson(string userAgent, string Headers, string postData)
 {
-	string Headers = "X-YouTube-Client-Name: 28\r\nX-YouTube-Client-Version: 1.60.19\r\nOrigin: https://www.youtube.com\r\ncontent-type: application/json\r\n";
-	string postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"hl\": \"" + HostIso639LangName() + "\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
-	string postData2 = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"clientScreen\": \"EMBED\"}, \"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
-	
-	return HostUrlGetStringWithAPI("https://www.youtube.com/youtubei/v1/player", "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip", Headers, passAge ? postData2 : postData, true);
+	string api = "https://www.youtube.com/youtubei/v1/player";
+	return HostUrlGetString(api, userAgent, Headers, postData, true);
+}
+
+string GetVideoJson(string videoId, bool isLive)
+{
+	string userAgent, headers, postData;
+
+	if (false)
+	{
+		userAgent = "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
+		headers = "X-YouTube-Client-Name: 28\r\n"
+			"X-YouTube-Client-Version: 1.60.19\r\n"
+			"Origin: https://www.youtube.com\r\n"
+			"content-type: application/json\r\n";
+		if (isLive)
+		{
+			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"clientScreen\": \"EMBED\"}, "
+				"\"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
+		}
+		else
+		{
+			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"hl\": \"" + HostIso639LangName() + "\"}}, "
+				"\"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
+		}
+	}
+	else
+	{
+		if (isLive)
+		{
+			postData = "{\"contentCheckOk\": true, \"context\": {\"client\": {\"clientName\": \"MWEB\", \"clientVersion\": \"2.20240726.01.00\", "
+				"\"hl\": \"" + HostIso639LangName() + "\", \"timeZone\": \"UTC\", \"utcOffsetMinutes\": 0}}, \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, "
+				"\"racyCheckOk\": true, \"videoId\": \"" + videoId + "\"}";
+			headers = "X-YouTube-Client-Name: 2\r\n"
+				"X-YouTube-Client-Version: 2.20240726.01.00\r\n"
+				"Origin: https://www.youtube.com\r\n"
+				"content-type: application/json\r\n";
+		}
+		else
+		{
+			postData = "{\"contentCheckOk\": true, \"context\": {\"client\": {\"clientName\": \"IOS\", \"clientVersion\": \"19.45.4\", "
+				"\"deviceMake\": \"Apple\", \"deviceModel\": \"iPhone16,2\", \"hl\": \"" + HostIso639LangName() + "\", \"osName\": \"iPhone\", \"osVersion\": \"18.1.0.22B83\", "
+				"\"timeZone\": \"UTC\", \"utcOffsetMinutes\": 0}}, \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"racyCheckOk\" : true, \"videoId\" : \"" + videoId + "\"}";
+			headers = "X-YouTube-Client-Name: 5\r\n"
+				"X-YouTube-Client-Version: 19.45.4\r\n"
+				"Origin: https://www.youtube.com\r\n"
+				"content-type: application/json\r\n";
+			userAgent = "com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1_0 like Mac OS X;)";
+		}
+	}
+	return GetVideoJson(userAgent, headers, postData);
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList)
@@ -1122,7 +1168,20 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 				{
 					JsonValue streamingData = Root["streamingData"];
 
-					if (streamingData.isObject()) player_response_jsonData = json;
+					if (streamingData.isObject())
+					{
+						player_response_jsonData = json;
+						if (i == 0)
+						{
+							JsonValue videoDetails = Root["videoDetails"];
+							if (videoDetails.isObject())
+							{
+								JsonValue isLive = videoDetails["isLive"];
+	
+								if (isLive.isBool() && isLive.asBool()) continue;
+							}
+						}
+					}
 					else if (error_message.empty())
 					{
 						JsonValue playabilityStatus = Root["playabilityStatus"];
@@ -1201,7 +1260,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			else dashmpd_len = WebData.size();
 			dashmpd_len -= dashmpd_start;
 		}
-
 
 		// hls live streaming
 		if (hlsmpd_start <= 0 && (hlsmpd_start = WebData.find(MATCH_HLSMPD_START)) >= 0)
