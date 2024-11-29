@@ -1039,7 +1039,7 @@ string GetVideoJson(string videoId, bool isLive)
 {
 	string userAgent, headers, postData;
 
-	if (false)
+	if (true)
 	{
 		userAgent = "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
 		headers = "X-YouTube-Client-Name: 28\r\n"
@@ -1048,12 +1048,12 @@ string GetVideoJson(string videoId, bool isLive)
 			"content-type: application/json\r\n";
 		if (isLive)
 		{
-			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"clientScreen\": \"EMBED\"}, "
+			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"clientScreen\": \"EMBED\"}, "
 				"\"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
 		}
 		else
 		{
-			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"hl\": \"" + HostIso639LangName() + "\"}}, "
+			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"hl\": \"" + HostIso639LangName() + "\"}}, "
 				"\"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
 		}
 	}
