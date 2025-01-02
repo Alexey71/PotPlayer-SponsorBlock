@@ -368,6 +368,7 @@ class QualityListItem
 	bool isHDR = false;
 	string audioName;
 	string audioCode;
+	bool audioIsDefault = false;
 	int bitrateVal = 0;
 
 	dictionary toDictionary()
@@ -387,6 +388,7 @@ class QualityListItem
 		ret["isHDR"] = isHDR;
 		ret["audioName"] = audioName;
 		ret["audioCode"] = audioCode;
+		ret["audioIsDefault"] = audioIsDefault;
 		ret["bitrateVal"] = bitrateVal;
 		return ret;
 	}
@@ -1357,8 +1359,8 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 				JsonValue streamingData = Root["streamingData"];
 				if (streamingData.isObject())
 				{
-					JsonValue streamingUrl = streamingData[isDash ? "dashManifestUrl" : "hlsManifestUrl"];
-					if (streamingUrl.isString()) url = streamingUrl.asString();
+					JsonValue ManifestUrl = streamingData[isDash ? "dashManifestUrl" : "hlsManifestUrl"];
+					if (ManifestUrl.isString()) url = ManifestUrl.asString();
 				}
 			}
 			if (url.empty())
@@ -1377,11 +1379,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 				if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, js_data, JSFuncs, JSFuncArgs);
 			}
-			url = url + "?ForceBHD";
+			url += "?ForceBHD";
 			final_url = url;
 			final_ext = "mp4";
-
-			//if (@MetaData !is null) MetaData["chatUrl"] = "https://www.youtube.com/live_chat?v=" + videoId + "&is_popout=1";
+			if (@MetaData !is null) MetaData["chatUrl"] = "https://www.youtube.com/live_chat?v=" + videoId + "&is_popout=1";
 		}
 		else
 		{
@@ -1393,142 +1394,169 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 				JsonValue streamingData = Root["streamingData"];
 				if (streamingData.isObject())
 				{
-					for (int i = 0; i < 2; i++)
+					JsonValue hlsManifestUrl = streamingData["hlsManifestUrl"];
+					if (false && hlsManifestUrl.isString()) // for hls vod.. currently not use
 					{
-						JsonValue formats = streamingData[i == 0 ? "formats" : "adaptiveFormats"];
-						if (formats.isArray())
+						string url = HostUrlDecode(hlsManifestUrl.asString());
+
+						url.replace("\\/", "/");
+						url = CorrectURL(url);
+						if (url.find("/s/") > 0)
 						{
-							for(int j = 0, len = formats.size(); j < len; j++)
+							string tmp = url;
+							string signature = HostRegExpParse(tmp, "/s/([0-9A-Z]+.[0-9A-Z]+)");
+
+							if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, js_data, JSFuncs, JSFuncArgs);
+						}
+						url += "?ForceBHD";
+						final_url = url;
+						final_ext = "mp4";
+					}
+					else
+					{
+						for (int i = 0; i < 2; i++)
+						{
+							JsonValue formats = streamingData[i == 0 ? "formats" : "adaptiveFormats"];
+							if (formats.isArray())
 							{
-								JsonValue format = formats[j];
-
-								if (format.isObject())
+								for(int j = 0, len = formats.size(); j < len; j++)
 								{
-									if (i == 1)
+									JsonValue format = formats[j];
+
+									if (format.isObject())
 									{
-										JsonValue type = format["type"];
+										if (i == 1)
+										{
+											JsonValue type = format["type"];
 
-										// fragmented url
-										if (type.isString() && type.asString() == "FORMAT_STREAM_TYPE_OTF") continue;
-									}
+											// fragmented url
+											if (type.isString() && type.asString() == "FORMAT_STREAM_TYPE_OTF") continue;
+										}
 
-									QualityListItem item;
-									JsonValue itag = format["itag"];
-									JsonValue url = format["url"];
-									JsonValue bitrate = format["bitrate"];
-									JsonValue width = format["width"];
-									JsonValue height = format["height"];
-									JsonValue quality = format["quality"];
-									JsonValue qualityLabel = format["qualityLabel"];
-									JsonValue projectionType = format["projectionType"];
-									JsonValue mimeType = format["mimeType"];
-									JsonValue fps = format["fps"];
-									JsonValue cipher = format["cipher"];
-									JsonValue signatureCipher = format["signatureCipher"];
-									JsonValue audioTrack = format["audioTrack"];
+										QualityListItem item;
+										JsonValue itag = format["itag"];
+										JsonValue url = format["url"];
+										JsonValue bitrate = format["bitrate"];
+										JsonValue width = format["width"];
+										JsonValue height = format["height"];
+										JsonValue quality = format["quality"];
+										JsonValue qualityLabel = format["qualityLabel"];
+										JsonValue projectionType = format["projectionType"];
+										JsonValue mimeType = format["mimeType"];
+										JsonValue fps = format["fps"];
+										JsonValue cipher = format["cipher"];
+										JsonValue signatureCipher = format["signatureCipher"];
+										JsonValue audioTrack = format["audioTrack"];
 									
-									if (itag.isInt()) item.itag = itag.asInt();
-									if (width.isInt() && height.isInt()) item.resolution = formatInt(width.asInt()) + "x" + formatInt(height.asInt());
-									if (bitrate.isInt())
-									{
-										item.bitrate = GetBitrateString(bitrate.asInt());
-										item.bitrateVal = bitrate.asInt();
-									}
-									if (quality.isString()) item.quality = quality.asString();
-									if (qualityLabel.isString()) item.qualityDetail = qualityLabel.asString();
-									if (mimeType.isString()) item.format = GetCodecName(HostUrlDecode(mimeType.asString()));
-									if (fps.isDouble())
-									{
-										double val = fps.asDouble();
-
-										if (val > 0) item.fps = val;
-									}
-									if (projectionType.isString())
-									{
-										int type = parseInt(quality.asString());
-
-										if (type == 2)
+										if (itag.isInt()) item.itag = itag.asInt();
+										if (width.isInt() && height.isInt()) item.resolution = formatInt(width.asInt()) + "x" + formatInt(height.asInt());
+										if (bitrate.isInt())
 										{
-											MetaData["type3D"] = 0;
-											MetaData["is360"] = 1; // 360 VR
+											item.bitrate = GetBitrateString(bitrate.asInt());
+											item.bitrateVal = bitrate.asInt();
 										}
-										else if (type == 3)
+										if (quality.isString()) item.quality = quality.asString();
+										if (qualityLabel.isString()) item.qualityDetail = qualityLabel.asString();
+										if (mimeType.isString()) item.format = GetCodecName(HostUrlDecode(mimeType.asString()));
+										if (fps.isDouble())
 										{
-											MetaData["type3D"] = 3; 	// T&B Half
-											MetaData["is360"] = 1; // 360 VR
+											double val = fps.asDouble();
+
+											if (val > 0) item.fps = val;
 										}
-										else if (type == 4)
+										if (projectionType.isString())
 										{
-										}
-										int type3D;
-										if (MetaData.get("type3D", type3D)) item.type3D = type3D;
+											int type = parseInt(quality.asString());
 
-										int is360;
-										if (MetaData.get("is360", is360)) item.is360 = is360 == 1;
-									}
-									if (audioTrack.isObject())
-									{
-										JsonValue displayName = audioTrack["displayName"];
-										if (displayName.isString()) item.audioName = displayName.asString();
-
-										JsonValue id = audioTrack["id"];
-										if (id.isString())
-										{
-											item.audioCode = id.asString();
-											int p = item.audioCode.find(".");
-											if (p > 0) item.audioCode = item.audioCode.Left(p);
-										}
-									}
-									if (url.isString())
-									{
-										item.url = url.asString();
-										if (item.url.find("xtags=drc") > 0) continue;
-									}
-									else if (cipher.isString() || signatureCipher.isString())
-									{
-										string u, signature, sigName = "signature";
-										string str = cipher.isString() ? cipher.asString() : signatureCipher.isString() ? signatureCipher.asString() : "";
-
-										str.replace("\\u0026", "&");
-										array<string> params = str.split("&");
-										for (int i = 0, len = params.size(); i < len; i++)
-										{
-											string param = params[i];
-											int k = param.find("=");
-
-											if (k > 0)
+											if (type == 2)
 											{
-												string paramHeader = param.Left(k);
-												string paramValue = param.substr(k + 1);
-
-												if (paramHeader == "url") u = HostUrlDecode(paramValue);
-												else if (paramHeader == "s") signature = HostUrlDecode(paramValue);
-												else if (paramHeader == "sp") sigName = paramValue;
-												else if (!u.empty()) u = u + "&" + paramHeader + "=" + HostUrlDecode(paramValue);
+												MetaData["type3D"] = 0;
+												MetaData["is360"] = 1; // 360 VR
 											}
-											else if (!u.empty()) u = u + "&" + param;
+											else if (type == 3)
+											{
+												MetaData["type3D"] = 3; 	// T&B Half
+												MetaData["is360"] = 1; // 360 VR
+											}
+											else if (type == 4)
+											{
+											}
+											int type3D;
+											if (MetaData.get("type3D", type3D)) item.type3D = type3D;
+
+											int is360;
+											if (MetaData.get("is360", is360)) item.is360 = is360 == 1;
 										}
-										if (!u.empty() && !signature.empty() && !js_data.empty())
+										if (audioTrack.isObject())
 										{
-											string param = "&" + sigName + "=";
+											JsonValue displayName = audioTrack["displayName"];
+											if (displayName.isString()) item.audioName = displayName.asString();
 
-											u = SignatureDecode(u, signature, param, WebData, js_data, JSFuncs, JSFuncArgs);
+											JsonValue id = audioTrack["id"];
+											if (id.isString())
+											{
+												item.audioCode = id.asString();
+												int p = item.audioCode.find(".");
+												if (p > 0)
+												{
+													item.audioCode = item.audioCode.Left(p);
+
+													JsonValue audioIsDefault = audioTrack["audioIsDefault"];
+													item.audioIsDefault = audioIsDefault.isBool() && audioIsDefault.asBool();
+												}
+											}
 										}
-										item.url = u;
-									}
-									item.url.replace("\\u0026", "&");
+										if (url.isString())
+										{
+											item.url = url.asString();
+											if (item.url.find("xtags=drc") > 0) continue;
+										}
+										else if (cipher.isString() || signatureCipher.isString())
+										{
+											string u, signature, sigName = "signature";
+											string str = cipher.isString() ? cipher.asString() : signatureCipher.isString() ? signatureCipher.asString() : "";
 
-									if (item.itag != 0 && !item.url.empty())
-									{
-										if (videoId == "jj9RZODDDZs" && item.url.find("clen=") < 0) continue; // 특수한 경우 ㄷㄷㄷ
-										if (item.url.find("dur=0.000") > 0) continue;
+											str.replace("\\u0026", "&");
+											array<string> params = str.split("&");
+											for (int i = 0, len = params.size(); i < len; i++)
+											{
+												string param = params[i];
+												int k = param.find("=");
 
-										if (item.url.find("xtags=vproj=mesh") > 0) MetaData["is360"] = 1;
-										item.isHDR = IsHDR(item.itag);
-										if (@QualityList !is null) AppendQualityList(QualityList, item, "");
-										if (SelectBestProfile(final_itag, final_ext, item.itag, youtubeSets)) final_url = item.url;
-										if (SelectBestProfile2(final_itag, final_ext, item.itag, youtubeSets)) final_url2 = item.url;
-										IsOK = true;
+												if (k > 0)
+												{
+													string paramHeader = param.Left(k);
+													string paramValue = param.substr(k + 1);
+
+													if (paramHeader == "url") u = HostUrlDecode(paramValue);
+													else if (paramHeader == "s") signature = HostUrlDecode(paramValue);
+													else if (paramHeader == "sp") sigName = paramValue;
+													else if (!u.empty()) u = u + "&" + paramHeader + "=" + HostUrlDecode(paramValue);
+												}
+												else if (!u.empty()) u = u + "&" + param;
+											}
+											if (!u.empty() && !signature.empty() && !js_data.empty())
+											{
+												string param = "&" + sigName + "=";
+
+												u = SignatureDecode(u, signature, param, WebData, js_data, JSFuncs, JSFuncArgs);
+											}
+											item.url = u;
+										}
+										item.url.replace("\\u0026", "&");
+
+										if (item.itag != 0 && !item.url.empty())
+										{
+											if (videoId == "jj9RZODDDZs" && item.url.find("clen=") < 0) continue; // 특수한 경우 ㄷㄷㄷ
+											if (item.url.find("dur=0.000") > 0) continue;
+
+											if (item.url.find("xtags=vproj=mesh") > 0) MetaData["is360"] = 1;
+											item.isHDR = IsHDR(item.itag);
+											if (@QualityList !is null) AppendQualityList(QualityList, item, "");
+											if (SelectBestProfile(final_itag, final_ext, item.itag, youtubeSets)) final_url = item.url;
+											if (SelectBestProfile2(final_itag, final_ext, item.itag, youtubeSets)) final_url2 = item.url;
+											IsOK = true;
+										}
 									}
 								}
 							}
