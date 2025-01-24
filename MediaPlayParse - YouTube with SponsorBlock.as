@@ -65,7 +65,6 @@ string MATCH_JS_START				= "\"js\":";
 string MATCH_JS_START_2             = "'PREFETCH_JS_RESOURCES': [\"";
 string MATCH_JS_START_3             = "\"PLAYER_JS_URL\":\"";
 string MATCH_END					= "\"";
-string MATCH_END2					= "&";
 
 string MATCH_PLAYER_RESPONSE       = "\"player_response\":\"";
 string MATCH_PLAYER_RESPONSE2      = "player_response=";
@@ -203,8 +202,10 @@ array<YOUTUBE_PROFILES> youtubeProfilesExt =
 	YOUTUBE_PROFILES(136, y_dash_mp4_video, 720, "mp4"),
 	YOUTUBE_PROFILES(135, y_dash_mp4_video, 480, "mp4"),
 	YOUTUBE_PROFILES(134, y_dash_mp4_video, 360, "mp4"),
+	YOUTUBE_PROFILES(597, y_dash_mp4_video, 256, "mp4"),
 	YOUTUBE_PROFILES(133, y_dash_mp4_video, 240, "mp4"),
 	YOUTUBE_PROFILES(160, y_dash_mp4_video, 144, "mp4"),
+	YOUTUBE_PROFILES(599, y_dash_mp4_audio, 30,  "m4a"),
 	YOUTUBE_PROFILES(139, y_dash_mp4_audio, 64, "m4a"),
 	YOUTUBE_PROFILES(140, y_dash_mp4_audio, 128, "m4a"),
 	YOUTUBE_PROFILES(141, y_dash_mp4_audio, 256, "m4a"),
@@ -222,6 +223,7 @@ array<YOUTUBE_PROFILES> youtubeProfilesExt =
 	YOUTUBE_PROFILES(247, y_webm_video, 720, "webm"),
 	YOUTUBE_PROFILES(244, y_webm_video, 480, "webm"),
 	YOUTUBE_PROFILES(243, y_webm_video, 360, "webm"),
+	YOUTUBE_PROFILES(598, y_webm_video, 256, "webm"),
 	YOUTUBE_PROFILES(242, y_webm_video, 240, "webm"),
 	YOUTUBE_PROFILES(278, y_webm_video, 144, "webm"),
 
@@ -230,6 +232,7 @@ array<YOUTUBE_PROFILES> youtubeProfilesExt =
 	YOUTUBE_PROFILES(338, y_webm_audio, 256, "webm"),
 	YOUTUBE_PROFILES(339, y_webm_audio, 320, "webm"),
 
+	YOUTUBE_PROFILES(600, y_webm_audio, 35, "webm"), // opus
 	YOUTUBE_PROFILES(249, y_webm_audio, 48,  "webm"), // opus
 	YOUTUBE_PROFILES(250, y_webm_audio, 64, "webm"), // opus
 	YOUTUBE_PROFILES(251, y_webm_audio, 256, "webm"), // opus
@@ -1031,6 +1034,20 @@ string GetJsonCode(string data, string code, int pos = 0)
 	return "";
 }
 
+string ExtractVisitorData(string videoId)
+{
+	string visitorData = "";
+
+	string url = "https://www.youtube.com/watch?v=" + videoId;
+	string data = HostUrlGetString(url, GetUserAgent());
+
+	visitorData = GetEntry(data, '"VISITOR_DATA":"', '"');
+	if (visitorData == "") {
+		visitorData = GetEntry(data, '"visitorData":"', '"');
+	}
+	return visitorData;
+}
+
 string GetVideoJson(string userAgent, string Headers, string postData)
 {
 	string api = "https://www.youtube.com/youtubei/v1/player";
@@ -1083,6 +1100,12 @@ string GetVideoJson(string videoId, bool isLive)
 			userAgent = "com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1_0 like Mac OS X;)";
 		}
 	}
+
+	string visitorData = ExtractVisitorData(videoId);
+	if (visitorData != "") {
+		headers += "X-Goog-Visitor-Id: " + visitorData + "\r\n";
+	}
+
 	return GetVideoJson(userAgent, headers, postData);
 }
 
