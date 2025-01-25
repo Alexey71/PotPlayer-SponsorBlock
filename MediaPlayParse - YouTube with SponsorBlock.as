@@ -1034,24 +1034,66 @@ string GetJsonCode(string data, string code, int pos = 0)
 	return "";
 }
 
-string ExtractVisitorData(string videoId)
-{
-	string visitorData = "";
-
-	string url = "https://www.youtube.com/watch?v=" + videoId;
-	string data = HostUrlGetString(url, GetUserAgent());
-
-	visitorData = GetEntry(data, '"VISITOR_DATA":"', '"');
-	if (visitorData == "") {
-		visitorData = GetEntry(data, '"visitorData":"', '"');
-	}
-	return visitorData;
-}
-
 string GetVideoJson(string userAgent, string Headers, string postData)
 {
 	string api = "https://www.youtube.com/youtubei/v1/player";
 	return HostUrlGetString(api, userAgent, Headers, postData, true);
+}
+
+string GetYTCFG(string videoId)
+{
+	string ret;
+	array<string> urls =
+	{
+		"https://www.youtube.com/embed/",
+		"https://www.youtube.com/watch?v="
+	};
+
+	for (int i = 0; i < 2; i++)
+	{
+		string data = HostUrlGetString(urls[i] + videoId, GetUserAgent());
+
+		if (!data.empty())
+		{
+			ret = HostRegExpParse(data, "ytcfg\\.set\\s*\\(\\s*(\\{.+?\\})\\s*\\)\\s*;");
+		}
+	}
+	return ret;
+}
+
+string GetVisitorData(string videoId)
+{
+	string visitorData;
+	string ytcfg = GetYTCFG(videoId);
+
+	if (!ytcfg.empty())
+	{
+		JsonReader reader;
+		JsonValue root;
+
+		if (reader.parse(ytcfg, root) && root.isObject())
+		{
+			JsonValue VISITOR_DATA = root["VISITOR_DATA"];
+
+			if (!VISITOR_DATA.isString())
+			{
+				JsonValue INNERTUBE_CONTEXT = root["INNERTUBE_CONTEXT"];
+
+				if (INNERTUBE_CONTEXT.isObject())
+				{
+					JsonValue client = INNERTUBE_CONTEXT["client"];
+
+					if (client.isObject())
+					{
+						VISITOR_DATA = client["visitorData"];
+					}
+				}
+			}
+			if (VISITOR_DATA.isString()) visitorData = VISITOR_DATA.asString();
+		}
+	}
+
+	return visitorData;
 }
 
 string GetVideoJson(string videoId, bool isLive)
@@ -1064,7 +1106,7 @@ string GetVideoJson(string videoId, bool isLive)
 		headers = "X-YouTube-Client-Name: 28\r\n"
 			"X-YouTube-Client-Version: 1.60.19\r\n"
 			"Origin: https://www.youtube.com\r\n"
-			"content-type: application/json\r\n";
+			"Content-Type: application/json\r\n";
 		if (isLive)
 		{
 			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.60.19\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"clientScreen\": \"EMBED\"}, "
@@ -1086,7 +1128,7 @@ string GetVideoJson(string videoId, bool isLive)
 			headers = "X-YouTube-Client-Name: 2\r\n"
 				"X-YouTube-Client-Version: 2.20240726.01.00\r\n"
 				"Origin: https://www.youtube.com\r\n"
-				"content-type: application/json\r\n";
+				"Content-Type: application/json\r\n";
 		}
 		else
 		{
@@ -1096,15 +1138,13 @@ string GetVideoJson(string videoId, bool isLive)
 			headers = "X-YouTube-Client-Name: 5\r\n"
 				"X-YouTube-Client-Version: 19.45.4\r\n"
 				"Origin: https://www.youtube.com\r\n"
-				"content-type: application/json\r\n";
+				"Content-Type: application/json\r\n";
 			userAgent = "com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1_0 like Mac OS X;)";
 		}
 	}
 
-	string visitorData = ExtractVisitorData(videoId);
-	if (visitorData != "") {
-		headers += "X-Goog-Visitor-Id: " + visitorData + "\r\n";
-	}
+	string visitorData = GetVisitorData(videoId);
+	if (!visitorData.empty()) headers = headers + "X-Goog-Visitor-Id: " + visitorData + "\r\n";
 
 	return GetVideoJson(userAgent, headers, postData);
 }
