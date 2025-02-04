@@ -1040,6 +1040,11 @@ string GetVideoJson(string userAgent, string Headers, string postData)
 	return HostUrlGetString(api, userAgent, Headers, postData, true);
 }
 
+string ParseYTCFG(string data)
+{
+	return HostRegExpParse(data, "ytcfg\\.set\\s*\\(\\s*(\\{.+?\\})\\s*\\)\\s*;");
+}
+
 string GetYTCFG(string videoId)
 {
 	string ret;
@@ -1055,17 +1060,17 @@ string GetYTCFG(string videoId)
 
 		if (!data.empty())
 		{
-			ret = HostRegExpParse(data, "ytcfg\\.set\\s*\\(\\s*(\\{.+?\\})\\s*\\)\\s*;");
+			ret = ParseYTCFG(data);
 		}
 	}
 	return ret;
 }
 
-string GetVisitorData(string videoId)
+string GetVisitorData(string videoId, string ytcfg)
 {
 	string visitorData;
-	string ytcfg = GetYTCFG(videoId);
 
+	if (ytcfg.empty()) ytcfg = GetYTCFG(videoId);
 	if (!ytcfg.empty())
 	{
 		JsonReader reader;
@@ -1096,7 +1101,7 @@ string GetVisitorData(string videoId)
 	return visitorData;
 }
 
-string GetVideoJson(string videoId, bool isLive)
+string GetVideoJson(string videoId, string ytcfg, bool isLive)
 {
 	string userAgent, headers, postData;
 
@@ -1143,7 +1148,7 @@ string GetVideoJson(string videoId, bool isLive)
 		}
 	}
 
-	string visitorData = GetVisitorData(videoId);
+	string visitorData = GetVisitorData(videoId, ytcfg);
 	if (!visitorData.empty()) headers = headers + "X-Goog-Visitor-Id: " + visitorData + "\r\n";
 
 	return GetVideoJson(userAgent, headers, postData);
@@ -1169,23 +1174,24 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 		string linkWeb = RepleaceYouTubeUrl(fn);
 		linkWeb = MakeYouTubeUrl(linkWeb);
+		linkWeb.replace("http://", "https://");
 
 		string videoId = GetVideoID(linkWeb);
-		linkWeb.replace("http://", "https://");
+		string ytcfg;
 
 		if (@MetaData !is null) MetaData["vid"] = videoId;
 
 		string WebData;
-		string js_data;
+		string JSData;
 
 		linkWeb += "&gl=US&hl=en&has_verified=1&bpctr=9999999999";
 		WebData = HostUrlGetString(linkWeb, GetUserAgent());
+		if (ytcfg.empty()) ytcfg = ParseYTCFG(WebData);
 
 		// Load js
-		if (js_data.empty() && (@QualityList !is null) && !WebData.empty())
+		if (JSData.empty() && (@QualityList !is null) && !WebData.empty())
 		{
 			string jsUrl = PlayerYouTubeSearchJS(WebData);
-			string sts;
 
 			if (jsUrl.empty()) jsUrl = GetEntry(WebData, MATCH_JS_START_2, MATCH_END);
 			if (jsUrl.empty()) jsUrl = GetEntry(WebData, MATCH_JS_START_3, MATCH_END);
@@ -1199,7 +1205,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 					jsUrl = PlayerYouTubeSearchJS(JSData);
 					if (jsUrl.empty()) jsUrl = GetEntry(JSData, MATCH_JS_START_2, MATCH_END);
 					if (jsUrl.empty()) jsUrl = GetEntry(JSData, MATCH_JS_START_3, MATCH_END);
-					sts = HostRegExpParse(JSData, "\"sts\"\\s*:\\s*(\\d+)");
+					if (ytcfg.empty()) ytcfg = ParseYTCFG(JSData);
 				}
 			}
 			if (!jsUrl.empty())
@@ -1215,14 +1221,14 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			}
 			if (jsUrl.empty()) jsUrl = "https://www.youtube.com/yts/jsbin/player-ko_KR-vflHE7FfV/base.js";
 
-			js_data = HostUrlGetString(jsUrl, GetUserAgent());
+			JSData = HostUrlGetString(jsUrl, GetUserAgent());
 		}
 
 		string error_message;
 		string player_response_jsonData, player_chapter_jsonData, player_sponsors_jsonData;
 		for (int i = 0; i < 2; i++)
 		{
-			string json = HostUrlDecode(GetVideoJson(videoId, i == 1));
+			string json = HostUrlDecode(GetVideoJson(videoId, ytcfg, i == 1));
 
 			if (!json.empty())
 			{
@@ -1440,7 +1446,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 				string tmp = url;
 				string signature = HostRegExpParse(tmp, "/s/([0-9A-Z]+.[0-9A-Z]+)");
 
-				if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, js_data, JSFuncs, JSFuncArgs);
+				if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, JSData, JSFuncs, JSFuncArgs);
 			}
 			url += "?ForceBHD";
 			final_url = url;
@@ -1469,7 +1475,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 							string tmp = url;
 							string signature = HostRegExpParse(tmp, "/s/([0-9A-Z]+.[0-9A-Z]+)");
 
-							if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, js_data, JSFuncs, JSFuncArgs);
+							if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, JSData, JSFuncs, JSFuncArgs);
 						}
 						url += "?ForceBHD";
 						final_url = url;
@@ -1598,11 +1604,11 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 												}
 												else if (!u.empty()) u = u + "&" + param;
 											}
-											if (!u.empty() && !signature.empty() && !js_data.empty())
+											if (!u.empty() && !signature.empty() && !JSData.empty())
 											{
 												string param = "&" + sigName + "=";
 
-												u = SignatureDecode(u, signature, param, WebData, js_data, JSFuncs, JSFuncArgs);
+												u = SignatureDecode(u, signature, param, WebData, JSData, JSFuncs, JSFuncArgs);
 											}
 											item.url = u;
 										}
@@ -1746,11 +1752,11 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 					if (url.find("dur=0.000") > 0) continue;
 
 					if (!sig.empty()) url = url + "&signature=" + sig;
-					else if (!signature.empty() && !js_data.empty())
+					else if (!signature.empty() && !JSData.empty())
 					{
 						string param = "&" + sigName + "=";
 
-						url = SignatureDecode(url, signature, param, WebData, js_data, JSFuncs, JSFuncArgs);
+						url = SignatureDecode(url, signature, param, WebData, JSData, JSFuncs, JSFuncArgs);
 					}
 					if (itag > 0)
 					{
