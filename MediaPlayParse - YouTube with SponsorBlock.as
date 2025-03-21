@@ -1,6 +1,10 @@
 /*
 	YouTube media parse
 */
+/*
+	Source code
+https://github.com/Alexey71/PotPlayer-SponsorBlock
+*/
 
 // void OnInitialize()
 // void OnFinalize()
