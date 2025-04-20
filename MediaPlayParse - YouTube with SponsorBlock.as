@@ -1283,7 +1283,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		}
 		if (player_response_jsonData.empty()) player_response_jsonData = GetJsonCode(WebData, MATCH_PLAYER_RESPONSE_2);
 
-		player_sponsors_jsonData = HostUrlGetString("https://sponsor.ajay.app/api/skipSegments?categories=[\"sponsor\", \"selfpromo\",\"interaction\", \"intro\", \"outro\", \"preview\", \"music_offtopic\", \"filler\"]&videoID=" + videoId);
+		player_sponsors_jsonData = HostUrlGetString("https://sponsor.ajay.app/api/skipSegments?categories=[%22sponsor%22,%22selfpromo%22,%22interaction%22,%22intro%22,%22outro%22,%22preview%22,%22music_offtopic%22,%22filler%22]&videoID=" + videoId);
 		player_sponsors_jsonData.replace("\\/", "/");
 		// player_sponsors_jsonData.replace("\\\"", "\"");
 		player_sponsors_jsonData.replace("\\\\", "\\");
