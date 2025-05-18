@@ -41,10 +41,10 @@ string GetDesc()
 
 string YOUTUBE_MP_URL				= "://www.youtube.com/";
 string YOUTUBE_PL_URL				= "://www.youtube.com/playlist?";
-string YOUTUBE_USER_URL    			= "://www.youtube.com/user/";
-string YOUTUBE_USER_SHORT_URL       = "://www.youtube.com/c/";
+string YOUTUBE_USER_URL				= "://www.youtube.com/user/";
+string YOUTUBE_USER_SHORT_URL		= "://www.youtube.com/c/";
 string YOUTUBE_CHANNEL_URL			= "://www.youtube.com/channel/";
-string YOUTUBE_URL_LIBRARY          = "youtube.com/@";
+string YOUTUBE_URL_LIBRARY			= "youtube.com/@";
 string YOUTUBE_URL					= "://www.youtube.com/watch?";
 string YOUTUBE_URL2					= "://www.youtube.com/v/";
 string YOUTUBE_URL3					= "://www.youtube.com/embed/";
@@ -66,18 +66,18 @@ string MATCH_HLSMPD_START			= "\"hlsManifestUrl\"";
 string MATCH_DASHMPD_START			= "\"dashManifestUrl\"";
 string MATCH_WIDTH_START			= "meta property=\"og:video:width\" content=\"";
 string MATCH_JS_START				= "\"js\":";
-string MATCH_JS_START_2             = "'PREFETCH_JS_RESOURCES': [\"";
-string MATCH_JS_START_3             = "\"PLAYER_JS_URL\":\"";
+string MATCH_JS_START_2				= "'PREFETCH_JS_RESOURCES': [\"";
+string MATCH_JS_START_3				= "\"PLAYER_JS_URL\":\"";
 string MATCH_END					= "\"";
 
-string MATCH_PLAYER_RESPONSE       = "\"player_response\":\"";
-string MATCH_PLAYER_RESPONSE2      = "player_response=";
-string MATCH_PLAYER_RESPONSE_END   = "}\"";
+string MATCH_PLAYER_RESPONSE		= "\"player_response\":\"";
+string MATCH_PLAYER_RESPONSE2		= "player_response=";
+string MATCH_PLAYER_RESPONSE_END	= "}\"";
 
-string MATCH_PLAYER_RESPONSE_2     = "ytInitialPlayerResponse = ";
+string MATCH_PLAYER_RESPONSE_2		= "ytInitialPlayerResponse = ";
 
-string MATCH_CHAPTER_RESPONSE      = "chapteredPlayerBarRenderer";
-string MATCH_CHAPTER_RESPONSE2     = "key\":\"DESCRIPTION_CHAPTERS\",\"value\"";
+string MATCH_CHAPTER_RESPONSE		= "chapteredPlayerBarRenderer";
+string MATCH_CHAPTER_RESPONSE2		= "key\":\"DESCRIPTION_CHAPTERS\",\"value\"";
 
 bool Is60Frame(int iTag)
 {
@@ -998,7 +998,7 @@ string XMLAttrValue(XMLElement Element, string name)
 
 string GetUserAgent()
 {
-	return "GooglePlayer";
+	return "Mozilla/5.0";
 }
 
 string GetJsonCode(string data, string code, int pos = 0)
