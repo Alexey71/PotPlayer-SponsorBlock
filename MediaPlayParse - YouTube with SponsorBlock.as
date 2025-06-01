@@ -1138,17 +1138,18 @@ string GetVideoJson(string videoId, string ytcfg, bool isLive)
 				"X-YouTube-Client-Version: 2.20250311.03.00\r\n"
 				"Origin: https://www.youtube.com\r\n"
 				"Content-Type: application/json\r\n";
+			userAgent = "Mozilla/5.0 (iPad; CPU OS 16_7_10 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1,gzip(gfe)";
 		}
 		else
 		{
-			postData = "{\"contentCheckOk\": true, \"context\": {\"client\": {\"clientName\": \"IOS\", \"clientVersion\": \"20.10.4\", "
-				"\"deviceMake\": \"Apple\", \"deviceModel\": \"iPhone16,2\", \"hl\": \"" + HostIso639LangName() + "\", \"osName\": \"iPhone\", \"osVersion\": \"18.3.2.22D82\", "
+			postData = "{\"contentCheckOk\": true, \"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"20.10.38\", "
+				"\"hl\": \"" + HostIso639LangName() + "\", \"osName\": \"Android\", \"osVersion\": \"11\", "
 				"\"timeZone\": \"UTC\", \"utcOffsetMinutes\": 0}}, \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"racyCheckOk\" : true, \"videoId\" : \"" + videoId + "\"}";
-			headers = "X-YouTube-Client-Name: 5\r\n"
-				"X-YouTube-Client-Version: 20.10.4\r\n"
+			headers = "X-YouTube-Client-Name: 3\r\n"
+				"X-YouTube-Client-Version: 20.10.38\r\n"
 				"Origin: https://www.youtube.com\r\n"
 				"Content-Type: application/json\r\n";
-			userAgent = "com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)";
+			userAgent = "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip";
 		}
 	}
 
