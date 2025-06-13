@@ -1237,19 +1237,19 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 			if (!json.empty())
 			{
-				JsonReader Reader;
-				JsonValue Root;
+				JsonReader reader;
+				JsonValue root;
 
-				if (Reader.parse(json, Root) && Root.isObject())
+				if (reader.parse(json, root) && root.isObject())
 				{
-					JsonValue streamingData = Root["streamingData"];
+					JsonValue streamingData = root["streamingData"];
 
 					if (streamingData.isObject())
 					{
 						player_response_jsonData = json;
 						if (i == 0)
 						{
-							JsonValue videoDetails = Root["videoDetails"];
+							JsonValue videoDetails = root["videoDetails"];
 							if (videoDetails.isObject())
 							{
 								JsonValue isLive = videoDetails["isLive"];
@@ -1260,7 +1260,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 					}
 					else if (error_message.empty())
 					{
-						JsonValue playabilityStatus = Root["playabilityStatus"];
+						JsonValue playabilityStatus = root["playabilityStatus"];
 						if (playabilityStatus.isObject())
 						{
 							JsonValue status = playabilityStatus["status"];
@@ -1399,14 +1399,14 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 		string final_url, final_url2;
 		string final_ext;
-		JsonReader Reader;
-		JsonValue Root;
-		bool okJson = !player_response_jsonData.empty() && Reader.parse(player_response_jsonData, Root) && Root.isObject();
+		JsonReader reader;
+		JsonValue root;
+		bool okJson = !player_response_jsonData.empty() && reader.parse(player_response_jsonData, root) && root.isObject();
 		if (okJson)
 		{
 			if (@MetaData !is null)
 			{
-				JsonValue playabilityStatus = Root["playabilityStatus"];
+				JsonValue playabilityStatus = root["playabilityStatus"];
 				if (playabilityStatus.isObject())
 				{
 					JsonValue status = playabilityStatus["status"];
@@ -1430,7 +1430,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 			if (okJson)
 			{
-				JsonValue streamingData = Root["streamingData"];
+				JsonValue streamingData = root["streamingData"];
 				if (streamingData.isObject())
 				{
 					JsonValue ManifestUrl = streamingData[isDash ? "dashManifestUrl" : "hlsManifestUrl"];
@@ -1465,7 +1465,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 			if (okJson)
 			{		
-				JsonValue streamingData = Root["streamingData"];
+				JsonValue streamingData = root["streamingData"];
 				if (streamingData.isObject())
 				{
 					JsonValue hlsManifestUrl = streamingData["hlsManifestUrl"];
@@ -1783,12 +1783,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			{
 				bool ParseMeta = false;
 				array<dictionary> subtitle;
-				JsonReader Reader;
-				JsonValue Root;
 
-				if (!player_response_jsonData.empty() && Reader.parse(player_response_jsonData, Root) && Root.isObject())
+				if (okJson)
 				{
-					JsonValue videoDetails = Root["videoDetails"];
+					JsonValue videoDetails = root["videoDetails"];
 					if (videoDetails.isObject())
 					{
 						JsonValue title = videoDetails["title"];
@@ -1865,14 +1863,16 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 						}
 					}
 
-					JsonValue microformat = Root["microformat"];
+					JsonValue microformat = root["microformat"];
 					if (!microformat.isObject())
 					{
 						string temp = GetJsonCode(WebData, MATCH_PLAYER_RESPONSE_2);
+						JsonReader reader;
+						JsonValue root;
 
-						if (!temp.empty() && Reader.parse(temp, Root) && Root.isObject())
+						if (!temp.empty() && reader.parse(temp, root) && root.isObject())
 						{
-							microformat = Root["microformat"];
+							microformat = root["microformat"];
 						}
 					}
 					if (microformat.isObject())
@@ -1901,7 +1901,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 						if (lengthSeconds.isString()) MetaData["duration"] = parseInt(lengthSeconds.asString()) * 1000;						
 					}
 
-					JsonValue captions = Root["captions"];
+					JsonValue captions = root["captions"];
 					if (captions.isObject())
 					{
 						JsonValue playerCaptionsTracklistRenderer = captions["playerCaptionsTracklistRenderer"];
@@ -1986,12 +1986,12 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 				{
 					string api = "https://www.googleapis.com/youtube/v3/videos?id=" + videoId + "&part=snippet,statistics,contentDetails&fields=items/snippet/title,items/snippet/publishedAt,items/snippet/channelTitle,items/snippet/description,items/statistics,items/contentDetails/duration";
 					string json = HostUrlGetStringWithAPI(api, GetUserAgent());
-					JsonReader Reader;
-					JsonValue Root;
+					JsonReader reader;
+					JsonValue root;
 
-					if (Reader.parse(json, Root) && Root.isObject())
+					if (reader.parse(json, root) && root.isObject())
 					{
-						JsonValue items = Root["items"];
+						JsonValue items = root["items"];
 						if (items.isArray())
 						{
 							JsonValue item = items[0];
@@ -2312,15 +2312,15 @@ array<dictionary> PlayerYouTubePlaylistByAPI(string url)
 			if (json.empty()) break;
 			else
 			{
-				JsonReader Reader;
-				JsonValue Root;
+				JsonReader reader;
+				JsonValue root;
 
-				if (Reader.parse(json, Root) && Root.isObject())
+				if (reader.parse(json, root) && root.isObject())
 				{
-					JsonValue nextPageToken = Root["nextPageToken"];
+					JsonValue nextPageToken = root["nextPageToken"];
 					if (nextPageToken.isString()) nextToken = nextPageToken.asString();
 
-					JsonValue items = Root["items"];
+					JsonValue items = root["items"];
 					if (items.isArray())
 					{
 						for(int j = 0, len = items.size(); j < len; j++)
@@ -2846,12 +2846,12 @@ array<dictionary> PlaylistParse(const string &in path)
 					moreUrl += "&disable_polymer=true";
 					url = "https://www.youtube.com/" + moreUrl;
 					string json = HostUrlGetString(url, GetUserAgent(), "x-youtube-client-name: 1\r\nx-youtube-client-version: 1.20200609.04.02\r\n");
-					JsonReader Reader;
-					JsonValue Root;
-					if (!json.empty() && Reader.parse(json, Root) && Root.isObject())
+					JsonReader reader;
+					JsonValue root;
+					if (!json.empty() && reader.parse(json, root) && root.isObject())
 					{
-						JsonValue content_html = Root["content_html"];
-						JsonValue load_more_widget_html = Root["load_more_widget_html"];
+						JsonValue content_html = root["content_html"];
+						JsonValue load_more_widget_html = root["load_more_widget_html"];
 
 						if (content_html.isString() && load_more_widget_html.isString())
 						{
