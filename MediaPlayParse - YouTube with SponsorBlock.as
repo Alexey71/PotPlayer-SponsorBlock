@@ -1938,24 +1938,23 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 											if (name.isObject())
 											{
 												JsonValue simpleText = name["simpleText"];
-												if (simpleText.isString()) subname = simpleText.asString();
-											}
-											else
-											{
-												JsonValue runs = name["runs"];
-
-												if (runs.isArray())
+												if (simpleText.isString()) subname = simpleText.asString();											
+												else
 												{
-													for (int k = 0, len = runs.size(); k < len; k++)
+													JsonValue runs = name["runs"];
+													if (runs.isArray())
 													{
-														JsonValue run = runs[k];
-														if (run.isObject())
+														for (int k = 0, len = runs.size(); k < len; k++)
 														{
-															JsonValue text = run["text"];
-															if (text.isString())
+															JsonValue run = runs[k];
+															if (run.isObject())
 															{
-																subname = text.asString();
-																break;
+																JsonValue text = run["text"];
+																if (text.isString())
+																{
+																	subname = text.asString();
+																	break;
+																}
 															}
 														}
 													}
