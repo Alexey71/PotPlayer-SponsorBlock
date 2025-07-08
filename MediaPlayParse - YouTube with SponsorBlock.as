@@ -1961,6 +1961,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 												}
 											}
 											if (subname.rfind(" - Default") == subname.length() - 10) subname = subname.substr(0, subname.length() - 10);
+											else if (subname.rfind(" - jamake") == subname.length() - 9) subname = subname.substr(0, subname.length() - 9);
 
 											JsonValue languageCode = captionTrack["languageCode"];
 
