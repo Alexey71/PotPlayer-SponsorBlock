@@ -1111,19 +1111,19 @@ string GetVideoJson(string videoId, string ytcfg, bool isLive)
 
 	if (true)
 	{
-		userAgent = "com.google.android.apps.youtube.vr.oculus/1.62.27 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
+		userAgent = "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
 		headers = "X-YouTube-Client-Name: 28\r\n"
-			"X-YouTube-Client-Version: 1.62.27\r\n"
+			"X-YouTube-Client-Version: 1.65.10\r\n"
 			"Origin: https://www.youtube.com\r\n"
 			"Content-Type: application/json\r\n";
 		if (isLive)
 		{
-			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.62.27\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"clientScreen\": \"EMBED\"}, "
+			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.65.10\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"clientScreen\": \"EMBED\"}, "
 				"\"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
 		}
 		else
 		{
-			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.62.27\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"hl\": \"" + HostIso639LangName() + "\"}}, "
+			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.65.10\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"hl\": \"" + HostIso639LangName() + "\"}}, "
 				"\"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
 		}
 	}
@@ -1131,11 +1131,11 @@ string GetVideoJson(string videoId, string ytcfg, bool isLive)
 	{
 		if (isLive)
 		{
-			postData = "{\"contentCheckOk\": true, \"context\": {\"client\": {\"clientName\": \"MWEB\", \"clientVersion\": \"2.20250311.03.00\", "
+			postData = "{\"contentCheckOk\": true, \"context\": {\"client\": {\"clientName\": \"MWEB\", \"clientVersion\": \"2.20250925.01.00\", "
 				"\"hl\": \"" + HostIso639LangName() + "\", \"timeZone\": \"UTC\", \"utcOffsetMinutes\": 0}}, \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, "
 				"\"racyCheckOk\": true, \"videoId\": \"" + videoId + "\"}";
 			headers = "X-YouTube-Client-Name: 2\r\n"
-				"X-YouTube-Client-Version: 2.20250311.03.00\r\n"
+				"X-YouTube-Client-Version: 2.20250925.01.00\r\n"
 				"Origin: https://www.youtube.com\r\n"
 				"Content-Type: application/json\r\n";
 			userAgent = "Mozilla/5.0 (iPad; CPU OS 16_7_10 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1,gzip(gfe)";
