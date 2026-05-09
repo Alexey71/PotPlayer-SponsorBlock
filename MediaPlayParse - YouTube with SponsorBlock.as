@@ -1111,6 +1111,7 @@ string GetVideoJson(string videoId, string ytcfg, bool isLive)
 
 	if (true)
 	{
+		// ANDROID_VR (Client 28) with version 1.65.10 for JS-LESS compatibility.
 		userAgent = "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
 		headers = "X-YouTube-Client-Name: 28\r\n"
 			"X-YouTube-Client-Version: 1.65.10\r\n"
@@ -1423,38 +1424,40 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			}
 		}
 
-		bool isDash = adaptive_fmts_start <= 0 && (dashmpd_len > 0 && hlsmpd_len > 0); // 일단 live만 mpd 지원되게 하자...
-		if (isDash || hlsmpd_len > 0)
+		string liveUrl;
+		if (okJson)
 		{
-			string url;
-
-			if (okJson)
+			JsonValue streamingData = root["streamingData"];
+			if (streamingData.isObject())
 			{
-				JsonValue streamingData = root["streamingData"];
-				if (streamingData.isObject())
+				JsonValue ManifestUrl = streamingData["dashManifestUrl"];
+				if (ManifestUrl.isString()) liveUrl = ManifestUrl.asString();
+				else
 				{
-					JsonValue ManifestUrl = streamingData[isDash ? "dashManifestUrl" : "hlsManifestUrl"];
-					if (ManifestUrl.isString()) url = ManifestUrl.asString();
+					ManifestUrl = streamingData["hlsManifestUrl"];
+					if (ManifestUrl.isString()) liveUrl = ManifestUrl.asString();
 				}
 			}
-			if (url.empty())
+		}
+		if (liveUrl.empty())
+		{
+			if (dashmpd_len > 0) liveUrl = WebData.substr(dashmpd_start, dashmpd_len);
+			else if (hlsmpd_len > 0) liveUrl = WebData.substr(hlsmpd_start, hlsmpd_len);
+		}
+		if (!liveUrl.empty())
+		{
+			liveUrl = HostUrlDecode(HostUrlDecode(liveUrl));
+			liveUrl.replace("\\/", "/");
+			liveUrl = CorrectURL(liveUrl);
+			if (liveUrl.find("/s/") > 0)
 			{
-				if (isDash) url = WebData.substr(dashmpd_start, dashmpd_len);
-				else url = WebData.substr(hlsmpd_start, hlsmpd_len);
-			}
-
-			url = HostUrlDecode(HostUrlDecode(url));
-			url.replace("\\/", "/");
-			url = CorrectURL(url);
-			if (url.find("/s/") > 0)
-			{
-				string tmp = url;
+				string tmp = liveUrl;
 				string signature = HostRegExpParse(tmp, "/s/([0-9A-Z]+.[0-9A-Z]+)");
 
-				if (!signature.empty()) url = SignatureDecode(tmp, signature, "/signature/", WebData, JSData, JSFuncs, JSFuncArgs);
+				if (!signature.empty()) liveUrl = SignatureDecode(tmp, signature, "/signature/", WebData, JSData, JSFuncs, JSFuncArgs);
 			}
-			url += "?ForceBHD";
-			final_url = url;
+			liveUrl += "?ForceBHD";
+			final_url = liveUrl;
 			final_ext = "mp4";
 			if (@MetaData !is null) MetaData["chatUrl"] = "https://www.youtube.com/live_chat?v=" + videoId + "&is_popout=1";
 		}
@@ -2120,7 +2123,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 									item["url"] = s5;
 									subtitle.insertLast(item);
 								}
-								track = track.NextSiblingElement();
+								track = track.NextSiblingElement("track");
 							}
 						}
 					}
