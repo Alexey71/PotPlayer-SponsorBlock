@@ -36,7 +36,16 @@ string GetVersion()
 
 string GetDesc()
 {
-	return "Modified version of the default YouTube Extension that adds SponsorBlock segments as Chapters.\nUses SponsorBlock data from https://sponsor.ajay.app/";
+	const string SITE_DEV = "https://github.com/Alexey71/PotPlayer-SponsorBlock";
+	const string SITE_DESC = "https://sponsor.ajay.app/";
+	string info =
+		"Modified version of the default YouTube Extension that adds SponsorBlock segments as Chapters. Uses SponsorBlock data from <a href=\"" + SITE_DESC + "\">sponsor.ajay.app</a>\r\n"
+		"\r\n"
+		"<a href=\"" + SITE_DEV + "\">Source code from GitHub</a>\r\n"
+		"\r\n"
+		"\r\n"
+		" ";
+	return info;
 }
 
 string YOUTUBE_MP_URL				= "://www.youtube.com/";
