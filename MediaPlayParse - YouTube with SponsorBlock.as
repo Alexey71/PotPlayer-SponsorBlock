@@ -1199,7 +1199,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		string WebData;
 		string JSData;
 
-		linkWeb += "&gl=US&hl=en&has_verified=1&bpctr=9999999999";
+		linkWeb += "&has_verified=1&bpctr=9999999999";
 		WebData = HostUrlGetString(linkWeb, GetUserAgent());
 		if (ytcfg.empty()) ytcfg = ParseYTCFG(WebData);
 
