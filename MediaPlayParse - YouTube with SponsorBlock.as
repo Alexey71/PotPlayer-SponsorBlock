@@ -2534,86 +2534,6 @@ string ParserPlaylistItem(string html, int start, int len, string vid, array<dic
 	return data_video_id;
 }
 
-string ParserPlaylistItem(JsonValue object, array<dictionary> &pls, string vid)
-{
-	JsonValue videoId = object["videoId"];
-	string lastvideoId;
-
-	if (videoId.isString())
-	{
-		string url = "https://www.youtube.com/watch?v=" + videoId.asString();
-		if (IsArrayExist(pls, url)) return lastvideoId;
-
-		JsonValue title = object["title"];
-		if (title.isObject())
-		{
-			JsonValue simpleText = title["simpleText"];
-
-			if (!simpleText.isString())
-			{
-				JsonValue runs = title["runs"];
-
-				if (runs.isObject())
-				{
-					JsonValue zero = runs["0"];
-
-					if (zero.isObject()) simpleText = zero["text"];
-				}
-				else if (runs.isArray())
-				{
-					JsonValue zero = runs[0];
-
-					if (zero.isObject()) simpleText = zero["text"];
-				}
-			}
-			if (simpleText.isString())
-			{
-				string duration;
-				JsonValue lengthSeconds = object["lengthSeconds"];
-				JsonValue lengthText = object["lengthText"];
-
-				if (lengthSeconds.isUInt()) duration = lengthSeconds.asString();
-				else if (lengthText.isObject())
-				{
-					JsonValue simpleText = lengthText["simpleText"];
-
-					if (simpleText.isString()) duration = simpleText.asString();
-				}
-
-				string thumb;
-				JsonValue thumbnail = object["thumbnail"];
-				if (thumbnail.isObject())
-				{
-					JsonValue thumbnails = thumbnail["thumbnails"];
-
-					if (thumbnails.isArray())
-					{
-						JsonValue th = thumbnails[0];
-
-						if (th.isObject())
-						{
-							JsonValue url = th["url"];
-
-							if (url.isString()) thumb = url.asString();
-						}
-					}
-				}
-
-				lastvideoId = videoId.asString();
-
-				dictionary item;
-				item["url"] = url;
-				item["title"] = simpleText.asString();
-				item["duration"] = duration;
-				if (!thumb.empty()) item["thumbnail"] = thumb;
-				if (lastvideoId == vid) item["current"] = "1";
-				pls.insertLast(item);
-			}
-		}
-	}
-	return lastvideoId;
-}
-
 JsonValue GetJsonPath(JsonValue object, string path)
 {
 	JsonValue ret;
@@ -2645,6 +2565,41 @@ JsonValue GetJsonPath(JsonValue object, string path)
 		}
 	}
 	return ret;
+}
+
+string ParserPlaylistItem(JsonValue object, array<dictionary> &pls, string vid)
+{
+	JsonValue contentId = object["contentId"];
+	string lastvideoId;
+
+	if (contentId.isString())
+	{
+		string url = "https://www.youtube.com/watch?v=" + contentId.asString();
+		if (IsArrayExist(pls, url)) return lastvideoId;
+
+		JsonValue content = GetJsonPath(object, "/metadata/lockupMetadataViewModel/title/content");
+		if (content.isString())
+		{
+			string duration;
+			JsonValue durationText = GetJsonPath(object, "/contentImage/thumbnailViewModel/overlays/0/thumbnailBottomOverlayViewModel/badges/0/thumbnailBadgeViewModel/text");
+			if (durationText.isString()) duration = durationText.asString();
+		
+			string thumb;
+			JsonValue thumbnail = GetJsonPath(object, "/contentImage/thumbnailViewModel/image/sources/0/url");
+			if (thumbnail.isString()) thumb = thumbnail.asString();
+	
+			lastvideoId = contentId.asString();
+
+			dictionary item;
+			item["url"] = url;
+			item["title"] = content.asString();
+			item["duration"] = duration;
+			if (!thumb.empty()) item["thumbnail"] = thumb;
+			if (lastvideoId == vid) item["current"] = "1";
+			pls.insertLast(item);
+		}
+	}
+	return lastvideoId;
 }
 
 
@@ -2708,9 +2663,9 @@ array<dictionary> PlaylistParse(const string &in path)
 				jsonEntry += "}";
 				if (reader.parse(jsonEntry, root) && root.isObject())
 				{
-					JsonValue contents = GetJsonPath(root, "contents/twoColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents/0/itemSectionRenderer/contents/0/playlistVideoListRenderer/contents");
-					if (!contents.isArray()) contents = GetJsonPath(root, "contents/twoColumnWatchNextResults/playlist/playlist/contents");
+					JsonValue contents = GetJsonPath(root, "/contents/twoColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents/0/itemSectionRenderer/contents");
 
+					if (!contents.isArray()) contents = GetJsonPath(root, "/contents/twoColumnWatchNextResults/secondaryResults/secondaryResults/results/0/itemSectionRenderer/contents");
 					if (contents.isArray())
 					{
 						for(int j = 0, len = contents.size(); j < len; j++)
@@ -2719,11 +2674,9 @@ array<dictionary> PlaylistParse(const string &in path)
 
 							if (content.isObject())
 							{
-								JsonValue playlistPanelVideoRenderer = content["playlistPanelVideoRenderer"];
-								JsonValue playlistVideoRenderer = content["playlistVideoRenderer"];
+								JsonValue lockupViewModel = content["lockupViewModel"];
 
-								if (playlistPanelVideoRenderer.isObject()) lastvideoId = ParserPlaylistItem(playlistPanelVideoRenderer, ret, vid);
-								else if (playlistVideoRenderer.isObject()) lastvideoId = ParserPlaylistItem(playlistVideoRenderer, ret, vid);
+								if (lockupViewModel.isObject()) lastvideoId = ParserPlaylistItem(lockupViewModel, ret, vid);
 								HostIncTimeOut(5000);
 							}
 						}
