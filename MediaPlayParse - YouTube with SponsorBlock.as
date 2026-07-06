@@ -2610,6 +2610,7 @@ string ParserPlaylistItem(JsonValue object, array<dictionary> &pls, string vid)
 			if (IsArrayExist(pls, url)) return lastvideoId;
 
 			JsonValue title = GetJsonPath(object, "/title/simpleText");
+			if (!title.isString()) title = GetJsonPath(object, "/title/runs/0/text");
 			if (title.isString())
 			{
 				JsonValue simpleText = GetJsonPath(object, "/lengthText/simpleText");
@@ -2702,7 +2703,7 @@ array<dictionary> PlaylistParse(const string &in path)
 					if (!contents.isArray()) contents = GetJsonPath(root, "/contents/twoColumnWatchNextResults/playlist/playlist/contents");
 					if (contents.isArray())
 					{
-						for(int j = 0, len = contents.size(); j < len; j++)
+						for (int j = 0, len = contents.size(); j < len; j++)
 						{
 							JsonValue content = contents[j];
 
@@ -2715,6 +2716,24 @@ array<dictionary> PlaylistParse(const string &in path)
 								{
 									JsonValue playlistPanelVideoRenderer = content["playlistPanelVideoRenderer"];
 									if (playlistPanelVideoRenderer.isObject()) lastvideoId = ParserPlaylistItem(playlistPanelVideoRenderer, ret, vid);
+									else
+									{
+										JsonValue contents2 = GetJsonPath(content, "/playlistVideoListRenderer/contents");
+
+										if (contents2.isArray())
+										{
+											for (int k = 0, len = contents2.size(); k < len; k++)
+											{
+												JsonValue content2 = contents2[k];
+												if (content2.isObject())
+												{
+													JsonValue playlistVideoRenderer = content2["playlistVideoRenderer"];
+
+													if (playlistVideoRenderer.isObject()) lastvideoId = ParserPlaylistItem(playlistVideoRenderer, ret, vid);
+												}
+											}
+										}
+									}
 								
 								}
 								HostIncTimeOut(5000);
