@@ -18,11 +18,18 @@ https://github.com/Alexey71/PotPlayer-SponsorBlock
 // string ServerCheck(string User, string Pass) 		-> server check
 // string ServerLogin(string User, string Pass) 		-> login
 // void ServerLogout() 									-> logout
+// string GetWebAccountUrl()							-> login process by WebBrowser
+// string GetWebAccountDomain()							-> transport cookie domain for login
 //------------------------------------------------------------------------------------------------
 // bool PlayitemCheck(const string &in)					-> check playitem
 // array<dictionary> PlayitemParse(const string &in)	-> parse playitem
+// void PlayitemCancel()								-> cancel playitem
 // bool PlaylistCheck(const string &in)					-> check playlist
 // array<dictionary> PlaylistParse(const string &in)	-> parse playlist
+// void PlaylistCancel()								-> cancel playlist
+// string GetStatus()									-> display status
+// string GetBroadcastListUrl()							-> get broadcast list url
+// string GetBroadcastListScript()						-> for WebView2::AddScriptToExecuteOnDocumentCreated for script process
 
 string GetTitle()
 {
@@ -48,24 +55,372 @@ string GetDesc()
 	return info;
 }
 
-string YOUTUBE_MP_URL				= "://www.youtube.com/";
-string YOUTUBE_PL_URL				= "://www.youtube.com/playlist?";
-string YOUTUBE_USER_URL				= "://www.youtube.com/user/";
-string YOUTUBE_USER_SHORT_URL		= "://www.youtube.com/c/";
-string YOUTUBE_CHANNEL_URL			= "://www.youtube.com/channel/";
-string YOUTUBE_URL_LIBRARY			= "youtube.com/@";
-string YOUTUBE_URL					= "://www.youtube.com/watch?";
-string YOUTUBE_URL2					= "://www.youtube.com/v/";
-string YOUTUBE_URL3					= "://www.youtube.com/embed/";
-string YOUTUBE_URL4					= "://www.youtube.com/attribution_link?a=";
-string YOUTUBE_URL5					= "://www.youtube.com/shorts";
-string YOUTUBE_URL6					= "://www.youtube.com/clip";
-string YOUTU_BE_URL1				= "://youtu.be/";
-string YOUTU_BE_URL2				= "://youtube.com/";
-string YOUTU_BE_URL3				= "://m.youtube.com/";
-string YOUTU_BE_URL4				= "://gaming.youtube.com/";
-string YOUTU_BE_URL5				= "://music.youtube.com/";
-string VIMEO_URL					= "://vimeo.com/";
+string GetWebAccountUrl()
+{
+	return "https://accounts.google.com/ServiceLogin?service=youtube";
+}
+
+string GetWebAccountDomain()
+{
+	return "www.google.com;www.youtube.com";
+}
+
+string GetBroadcastListUrl()
+{
+	return "https://www.youtube.com/;https://m.youtube.com/";
+}
+
+string GetBroadcastListScript()
+{
+	return "(() => {\n"
+		"  if (window.__potPlayerClickBlocker) return;\n"
+		"  if (!window.chrome || !chrome.webview) return;\n"
+		"  window.__potPlayerClickBlocker = true;\n"
+		"\n"
+		"  const messageType = 'potPlayer.video-click';\n"
+		"  const pageHost = location.hostname.toLowerCase().replace(/^www\\./, '');\n"
+		"  const isYouTubePage = pageHost === 'youtube.com' || pageHost.endsWith('.youtube.com');\n"
+		"  const videoAttributes = ['href', 'data-href', 'data-url'];\n"
+		"  const channelSelector = [\n"
+		"    'ytd-channel-name',\n"
+		"    'ytm-channel-name',\n"
+		"    'ytm-badge-and-byline-renderer',\n"
+		"    'ytm-channel-thumbnail-with-link-renderer',\n"
+		"    '.compact-media-item-byline',\n"
+		"    '.media-item-byline',\n"
+		"    '.ytm-badge-and-byline-item-byline',\n"
+		"    '.ytm-badge-and-byline-item',\n"
+		"    '#channel-name',\n"
+		"    '#byline',\n"
+		"    'a[href^=\"/@\"]',\n"
+		"    'a[href^=\"/channel/\"]',\n"
+		"    'a[href^=\"/c/\"]',\n"
+		"    'a[href^=\"/user/\"]'\n"
+		"  ].join(',');\n"
+		"  const preferredSelector = [\n"
+		"    'a[href*=\"/watch\"]',\n"
+		"    'a[href*=\"/shorts/\"]',\n"
+		"    'a[href*=\"/live/\"]',\n"
+		"    'a[href*=\"youtu.be/\"]',\n"
+		"    '[data-href*=\"/watch\"]',\n"
+		"    '[data-href*=\"/shorts/\"]',\n"
+		"    '[data-href*=\"/live/\"]',\n"
+		"    '[data-url*=\"/watch\"]',\n"
+		"    '[data-url*=\"/shorts/\"]',\n"
+		"    '[data-url*=\"/live/\"]'\n"
+		"  ].join(',');\n"
+		"  const cardSelector = [\n"
+		"    'ytd-rich-item-renderer',\n"
+		"    'ytd-video-renderer',\n"
+		"    'ytd-compact-video-renderer',\n"
+		"    'ytd-grid-video-renderer',\n"
+		"    'ytd-playlist-video-renderer',\n"
+		"    'ytm-video-with-context-renderer',\n"
+		"    'ytm-compact-video-renderer',\n"
+		"    'ytm-rich-item-renderer'\n"
+		"  ].join(',');\n"
+		"  const playerSelector = [\n"
+		"    '#movie_player',\n"
+		"    '.html5-video-player',\n"
+		"    'ytd-player'\n"
+		"  ].join(',');\n"
+		"\n"
+		"  const seekControlSelector = [\n"
+		"    '[role=\"slider\"]',\n"
+		"    '[role=\"progressbar\"]',\n"
+		"    '[role=\"scrollbar\"]',\n"
+		"    '[aria-valuemin][aria-valuemax]',\n"
+		"    '.ytp-progress-bar',\n"
+		"    '.ytp-progress-list',\n"
+		"    '.ytp-scrubber-container',\n"
+		"    '.ytp-hover-progress',\n"
+		"    '.ytp-play-progress',\n"
+		"    '.ytp-load-progress',\n"
+		"    '.ytp-chapter-hover-container',\n"
+		"    '.ytp-timed-markers-container',\n"
+		"    'tp-yt-paper-slider',\n"
+		"    'paper-slider',\n"
+		"    'yt-thumbnail-overlay-progress-bar-view-model',\n"
+		"    'ytd-thumbnail-overlay-resume-playback-renderer',\n"
+		"    'ytm-thumbnail-overlay-resume-playback-renderer'\n"
+		"  ].join(',');\n"
+		"\n"
+		"  function parseVideoUrl(value) {\n"
+		"    try {\n"
+		"      const u = new URL(value, location.href);\n"
+		"      const host = u.hostname.toLowerCase().replace(/^www\\./, '');\n"
+		"\n"
+		"      if (host === 'youtu.be' && u.pathname.length > 1) return { url: u.href, score: 100 };\n"
+		"      if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {\n"
+		"        const embedMatch = u.pathname.match(/^\\/embed\\/([^/?#]+)/);\n"
+		"        if (embedMatch) return { url: 'https://www.youtube.com/watch?v=' + encodeURIComponent(embedMatch[1]), score: 100 };\n"
+		"        if (u.pathname === '/watch' && u.searchParams.get('v')) return { url: u.href, score: 100 };\n"
+		"        if (u.pathname.startsWith('/shorts/') && u.pathname.length > 8) return { url: u.href, score: 100 };\n"
+		"        if (u.pathname.startsWith('/live/') && u.pathname.length > 6) return { url: u.href, score: 100 };\n"
+		"      }\n"
+		"    } catch (e) {\n"
+		"    }\n"
+		"    return null;\n"
+		"  }\n"
+		"\n"
+		"  function isYouTubeChannelUrl(value) {\n"
+		"    try {\n"
+		"      const u = new URL(value, location.href);\n"
+		"      const host = u.hostname.toLowerCase().replace(/^www\\./, '');\n"
+		"      if (host !== 'youtube.com' && host !== 'm.youtube.com') return false;\n"
+		"\n"
+		"      const parts = u.pathname.split('/').filter(Boolean);\n"
+		"      if (!parts.length) return false;\n"
+		"\n"
+		"      const first = decodeURIComponent(parts[0]).toLowerCase();\n"
+		"      return first.startsWith('@') ||\n"
+		"        ((first === 'channel' || first === 'c' || first === 'user') && parts.length > 1);\n"
+		"    } catch (e) {\n"
+		"    }\n"
+		"    return false;\n"
+		"  }\n"
+		"\n"
+		"  function getVideoUrl(value) {\n"
+		"    const result = parseVideoUrl(value);\n"
+		"    return result ? result.url : '';\n"
+		"  }\n"
+		"\n"
+		"  function firstElement(target) {\n"
+		"    return target && target.nodeType === Node.TEXT_NODE ? target.parentElement : target;\n"
+		"  }\n"
+		"\n"
+		"  function getEventElements(e) {\n"
+		"    const path = e.composedPath ? e.composedPath() : null;\n"
+		"    if (path && path.length) return path.filter(node => node && node.nodeType === Node.ELEMENT_NODE);\n"
+		"\n"
+		"    const elements = [];\n"
+		"    for (let node = firstElement(e.target); node && node !== document; node = node.parentElement) {\n"
+		"      elements.push(node);\n"
+		"    }\n"
+		"    return elements;\n"
+		"  }\n"
+		"\n"
+		"  function getNodeVideoResult(node) {\n"
+		"    if (!node) return null;\n"
+		"\n"
+		"    if (node.href) {\n"
+		"      const result = parseVideoUrl(node.href);\n"
+		"      if (result) return result;\n"
+		"    }\n"
+		"\n"
+		"    if (node.getAttribute) {\n"
+		"      for (const attr of videoAttributes) {\n"
+		"        const value = node.getAttribute(attr);\n"
+		"        if (!value) continue;\n"
+		"\n"
+		"        const result = parseVideoUrl(value);\n"
+		"        if (result) return result;\n"
+		"      }\n"
+		"\n"
+		"      const videoId = node.getAttribute('data-video-id') || node.getAttribute('video-id');\n"
+		"      if (videoId && /^[a-z0-9_-]{6,}$/i.test(videoId) && isYouTubePage) {\n"
+		"        return { url: 'https://www.youtube.com/watch?v=' + encodeURIComponent(videoId), score: 95 };\n"
+		"      }\n"
+		"    }\n"
+		"\n"
+		"    return null;\n"
+		"  }\n"
+		"\n"
+		"  function findDescendantVideoResult(node) {\n"
+		"    if (!node || !node.querySelector) return null;\n"
+		"\n"
+		"    const preferred = node.querySelector(preferredSelector);\n"
+		"    if (preferred) {\n"
+		"      const result = getNodeVideoResult(preferred);\n"
+		"      if (result) return result;\n"
+		"    }\n"
+		"\n"
+		"    if (!node.querySelectorAll) return null;\n"
+		"\n"
+		"    let best = null;\n"
+		"    let scanned = 0;\n"
+		"    const links = node.querySelectorAll('a[href], [data-href], [data-url]');\n"
+		"    for (const link of links) {\n"
+		"      const result = getNodeVideoResult(link);\n"
+		"      if (result && (!best || result.score > best.score)) {\n"
+		"        best = result;\n"
+		"        if (best.score >= 100) break;\n"
+		"      }\n"
+		"\n"
+		"      scanned++;\n"
+		"      if (scanned >= 32) break;\n"
+		"    }\n"
+		"    return best;\n"
+		"  }\n"
+		"\n"
+		"  function isSeekControlElement(node) {\n"
+		"    if (!node || !node.tagName) return false;\n"
+		"    if (node.tagName === 'PROGRESS') return true;\n"
+		"\n"
+		"    const role = node.getAttribute && node.getAttribute('role');\n"
+		"    if (role === 'slider' || role === 'progressbar' || role === 'scrollbar') return true;\n"
+		"\n"
+		"    return !!(node.matches && node.matches(seekControlSelector));\n"
+		"  }\n"
+		"\n"
+		"  function isControlElement(node) {\n"
+		"    if (!node || !node.tagName) return false;\n"
+		"    if (isSeekControlElement(node)) return true;\n"
+		"\n"
+		"    const tag = node.tagName;\n"
+		"    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'SUMMARY') return true;\n"
+		"\n"
+		"    const role = node.getAttribute && node.getAttribute('role');\n"
+		"    return role === 'button' || role === 'menuitem' || role === 'checkbox' || role === 'radio' || role === 'switch';\n"
+		"  }\n"
+		"\n"
+		"  function isYouTubeChannelElement(node) {\n"
+		"    if (!node || !node.getAttribute) return false;\n"
+		"    if (node.href && isYouTubeChannelUrl(node.href)) return true;\n"
+		"\n"
+		"    for (const attr of videoAttributes) {\n"
+		"      const value = node.getAttribute(attr);\n"
+		"      if (value && isYouTubeChannelUrl(value)) return true;\n"
+		"    }\n"
+		"\n"
+		"    return !!(node.matches && node.matches(channelSelector)) ||\n"
+		"      !!(node.closest && node.closest(channelSelector));\n"
+		"  }\n"
+		"\n"
+		"  function isPlayerNode(node) {\n"
+		"    if (!node) return false;\n"
+		"    if (node.tagName === 'VIDEO') return true;\n"
+		"    return !!(node.matches && node.matches(playerSelector));\n"
+		"  }\n"
+		"\n"
+		"  function findVideoUrl(elements) {\n"
+		"    let allowCardLookup = true;\n"
+		"\n"
+		"    for (const node of elements) {\n"
+		"      const result = getNodeVideoResult(node);\n"
+		"      if (result) return result.url;\n"
+		"\n"
+		"      if (isControlElement(node) && !isPlayerNode(node)) allowCardLookup = false;\n"
+		"      if (allowCardLookup && node.matches && node.matches(cardSelector)) {\n"
+		"        const childResult = findDescendantVideoResult(node);\n"
+		"        if (childResult) return childResult.url;\n"
+		"      }\n"
+		"    }\n"
+		"    return '';\n"
+		"  }\n"
+		"\n"
+		"  let lastPostedUrl = '';\n"
+		"  let lastPostedTime = 0;\n"
+		"  let activeUrl = '';\n"
+		"  let activeUntil = 0;\n"
+		"  let activeX = 0;\n"
+		"  let activeY = 0;\n"
+		"\n"
+		"  function getEventPoint(e) {\n"
+		"    if (typeof e.clientX === 'number' && typeof e.clientY === 'number') return { x: e.clientX, y: e.clientY };\n"
+		"    if (e.changedTouches && e.changedTouches.length) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };\n"
+		"    if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };\n"
+		"    return null;\n"
+		"  }\n"
+		"\n"
+		"  function canUseActiveUrl(e, now) {\n"
+		"    if (!(e.type === 'pointerup' || e.type === 'mouseup' || e.type === 'touchend' ||\n"
+		"      e.type === 'click' || e.type === 'auxclick' || e.type === 'dblclick')) return false;\n"
+		"    if (!activeUrl || now >= activeUntil) return false;\n"
+		"\n"
+		"    const point = getEventPoint(e);\n"
+		"    if (!point) return false;\n"
+		"\n"
+		"    const dx = point.x - activeX;\n"
+		"    const dy = point.y - activeY;\n"
+		"    return dx * dx + dy * dy <= 100;\n"
+		"  }\n"
+		"\n"
+		"  function getClickedVideoUrl(e) {\n"
+		"    const elements = getEventElements(e);\n"
+		"    if (elements.some(isSeekControlElement)) {\n"
+		"      activeUrl = '';\n"
+		"      activeUntil = 0;\n"
+		"      return '';\n"
+		"    }\n"
+		"    if (elements.some(isYouTubeChannelElement)) {\n"
+		"      activeUrl = '';\n"
+		"      activeUntil = 0;\n"
+		"      return '';\n"
+		"    }\n"
+		"\n"
+		"    let url = findVideoUrl(elements);\n"
+		"    const now = Date.now();\n"
+		"\n"
+		"    if (!url && canUseActiveUrl(e, now)) url = activeUrl;\n"
+		"    if (!url && elements.some(isPlayerNode)) url = getVideoUrl(location.href);\n"
+		"    if (url) {\n"
+		"      const point = getEventPoint(e);\n"
+		"\n"
+		"      activeUrl = url;\n"
+		"      activeUntil = now + 400;\n"
+		"      if (point) {\n"
+		"        activeX = point.x;\n"
+		"        activeY = point.y;\n"
+		"      }\n"
+		"    }\n"
+		"    return url;\n"
+		"  }\n"
+		"\n"
+		"  function postVideoUrl(url) {\n"
+		"    const now = Date.now();\n"
+		"    if (url === lastPostedUrl && now - lastPostedTime < 500) return;\n"
+		"\n"
+		"    lastPostedUrl = url;\n"
+		"    lastPostedTime = now;\n"
+		"    chrome.webview.postMessage({\n"
+		"      type: messageType,\n"
+		"      url: url\n"
+		"    });\n"
+		"  }\n"
+		"\n"
+		"  function blockVideoEvent(e) {\n"
+		"    e.preventDefault();\n"
+		"    e.stopPropagation();\n"
+		"    e.stopImmediatePropagation();\n"
+		"  }\n"
+		"\n"
+		"  function onVideoInput(e) {\n"
+		"    if (typeof e.button === 'number' && e.button === 2) return;\n"
+		"\n"
+		"    const url = getClickedVideoUrl(e);\n"
+		"    if (!url) return;\n"
+		"\n"
+		"    blockVideoEvent(e);\n"
+		"    postVideoUrl(url);\n"
+		"  }\n"
+		"\n"
+		"  const eventOptions = { capture: true, passive: false };\n"
+		"  for (const eventName of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'auxclick', 'dblclick']) {\n"
+		"    window.addEventListener(eventName, onVideoInput, eventOptions);\n"
+		"    document.addEventListener(eventName, onVideoInput, eventOptions);\n"
+		"  }\n"
+		"})();\n";
+}
+
+string YOUTUBE_MP_URL			= "://www.youtube.com/";
+string YOUTUBE_PL_URL			= "://www.youtube.com/playlist?";
+string YOUTUBE_USER_URL    		= "://www.youtube.com/user/";
+string YOUTUBE_USER_SHORT_URL	= "://www.youtube.com/c/";
+string YOUTUBE_CHANNEL_URL		= "://www.youtube.com/channel/";
+string YOUTUBE_URL_LIBRARY		= "youtube.com/@";
+string YOUTUBE_URL				= "://www.youtube.com/watch?";
+string YOUTUBE_URL2				= "://www.youtube.com/v/";
+string YOUTUBE_URL3				= "://www.youtube.com/embed/";
+string YOUTUBE_URL4				= "://www.youtube.com/attribution_link?a=";
+string YOUTUBE_URL5				= "://www.youtube.com/shorts";
+string YOUTUBE_URL6				= "://www.youtube.com/clip";
+string YOUTU_BE_URL1			= "://youtu.be/";
+string YOUTU_BE_URL2			= "://youtube.com/";
+string YOUTU_BE_URL3			= "://m.youtube.com/";
+string YOUTU_BE_URL4			= "://gaming.youtube.com/";
+string YOUTU_BE_URL5			= "://music.youtube.com/";
+string VIMEO_URL				= "://vimeo.com/";
 
 string MATCH_STREAM_MAP_START		= "\"url_encoded_fmt_stream_map\"";
 string MATCH_STREAM_MAP_START2		= "url_encoded_fmt_stream_map=";
@@ -79,14 +434,14 @@ string MATCH_JS_START_2				= "'PREFETCH_JS_RESOURCES': [\"";
 string MATCH_JS_START_3				= "\"PLAYER_JS_URL\":\"";
 string MATCH_END					= "\"";
 
-string MATCH_PLAYER_RESPONSE		= "\"player_response\":\"";
-string MATCH_PLAYER_RESPONSE2		= "player_response=";
-string MATCH_PLAYER_RESPONSE_END	= "}\"";
+string MATCH_PLAYER_RESPONSE       = "\"player_response\":\"";
+string MATCH_PLAYER_RESPONSE2      = "player_response=";
+string MATCH_PLAYER_RESPONSE_END   = "}\"";
 
-string MATCH_PLAYER_RESPONSE_2		= "ytInitialPlayerResponse = ";
+string MATCH_PLAYER_RESPONSE_2     = "ytInitialPlayerResponse = ";
 
-string MATCH_CHAPTER_RESPONSE		= "chapteredPlayerBarRenderer";
-string MATCH_CHAPTER_RESPONSE2		= "key\":\"DESCRIPTION_CHAPTERS\",\"value\"";
+string MATCH_CHAPTER_RESPONSE      = "chapteredPlayerBarRenderer";
+string MATCH_CHAPTER_RESPONSE2     = "key\":\"DESCRIPTION_CHAPTERS\",\"value\"";
 
 bool Is60Frame(int iTag)
 {
