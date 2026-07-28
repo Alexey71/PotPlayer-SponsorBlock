@@ -396,10 +396,7 @@ string GetBroadcastListScript()
 		"  }\n"
 		"\n"
 		"  const eventOptions = { capture: true, passive: false };\n"
-		"  for (const eventName of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'auxclick', 'dblclick']) {\n"
-		"    window.addEventListener(eventName, onVideoInput, eventOptions);\n"
-		"    document.addEventListener(eventName, onVideoInput, eventOptions);\n"
-		"  }\n"
+		"  window.addEventListener('click', onVideoInput, eventOptions);\n"
 		"})();\n";
 }
 
