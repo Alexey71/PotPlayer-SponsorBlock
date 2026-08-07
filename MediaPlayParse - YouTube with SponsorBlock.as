@@ -1431,7 +1431,7 @@ string GetYTCFG(string videoId)
 	return ret;
 }
 
-string GetVisitorData(string videoId, string ytcfg)
+string GetVisitorData(string videoId, string &ytcfg)
 {
 	string visitorData;
 
@@ -1453,10 +1453,7 @@ string GetVisitorData(string videoId, string ytcfg)
 				{
 					JsonValue client = INNERTUBE_CONTEXT["client"];
 
-					if (client.isObject())
-					{
-						VISITOR_DATA = client["visitorData"];
-					}
+					if (client.isObject()) VISITOR_DATA = client["visitorData"];
 				}
 			}
 			if (VISITOR_DATA.isString()) visitorData = VISITOR_DATA.asString();
@@ -1466,53 +1463,54 @@ string GetVisitorData(string videoId, string ytcfg)
 	return visitorData;
 }
 
-string GetVideoJson(string videoId, string ytcfg, bool isLive)
+string GetSTS(string videoId, string &ytcfg)
+{
+	string sts;
+
+	if (ytcfg.empty()) ytcfg = GetYTCFG(videoId);
+	if (!ytcfg.empty())
+	{
+		JsonReader reader;
+		JsonValue root;
+
+		if (reader.parse(ytcfg, root) && root.isObject())
+		{
+			JsonValue STS = root["STS"];
+			if (!STS.isString() && !STS.isInt())
+			{
+				JsonValue INNERTUBE_CONTEXT = root["INNERTUBE_CONTEXT"];
+
+				if (INNERTUBE_CONTEXT.isObject())
+				{
+					JsonValue client = INNERTUBE_CONTEXT["client"];
+
+					if (client.isObject()) STS = client["STS"];
+				}
+			}
+		
+			if (STS.isString() || STS.isInt()) sts = STS.asString();
+		}
+	}
+	if (sts.empty()) sts = "20432";
+	return sts;
+}
+
+string GetVideoJson(string videoId, string &ytcfg, bool isLive)
 {
 	string userAgent, headers, postData;
+	string lang = HostIso639LangName();
 
 	if (true)
 	{
-		// ANDROID_VR (Client 28) with version 1.65.10 for JS-LESS compatibility.
 		userAgent = "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
 		headers = "X-YouTube-Client-Name: 28\r\n"
 			"X-YouTube-Client-Version: 1.65.10\r\n"
 			"Origin: https://www.youtube.com\r\n"
 			"Content-Type: application/json\r\n";
-		if (isLive)
-		{
-			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.65.10\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"clientScreen\": \"EMBED\"}, "
-				"\"thirdParty\": {\"embedUrl\": \"https://google.com\"}}, \"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
-		}
-		else
-		{
-			postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.65.10\", \"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"hl\": \"" + HostIso639LangName() + "\", \"androidSdkVersion\": 32, \"osName\": \"Android\", \"osVersion\": \"12L\"}}, "
-				"\"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\", \"signatureTimestamp\": 20432}}, \"contentCheckOk\": true, \"racyCheckOk\": true}";
-		}
-	}
-	else
-	{
-		if (isLive)
-		{
-			userAgent = "Mozilla/5.0 (iPad; CPU OS 16_7_10 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1,gzip(gfe)";
-			headers = "X-YouTube-Client-Name: 2\r\n"
-				"X-YouTube-Client-Version: 2.20260115.01.00\r\n"
-				"Origin: https://www.youtube.com\r\n"
-				"Content-Type: application/json\r\n";
-			postData = "{\"contentCheckOk\": true, \"context\": {\"client\": {\"clientName\": \"MWEB\", \"clientVersion\": \"2.20260115.01.00\", "
-				"\"hl\": \"" + HostIso639LangName() + "\", \"timeZone\": \"UTC\", \"utcOffsetMinutes\": 0}}, \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, "
-				"\"racyCheckOk\": true, \"videoId\": \"" + videoId + "\"}";
-		}
-		else
-		{
-			userAgent = "com.google.android.youtube/21.02.35 (Linux; U; Android 11) gzip";		
-			headers = "X-YouTube-Client-Name: 3\r\n"
-				"X-YouTube-Client-Version: 21.02.35\r\n"
-				"Origin: https://www.youtube.com\r\n"
-				"Content-Type: application/json\r\n";
-			postData = "{\"contentCheckOk\": true, \"context\": {\"client\": {\"clientName\": \"ANDROID\", \"clientVersion\": \"21.02.35\", "
-				"\"hl\": \"" + HostIso639LangName() + "\", \"osName\": \"Android\", \"osVersion\": \"11\", "
-				"\"timeZone\": \"UTC\", \"utcOffsetMinutes\": 0}}, \"playbackContext\": {\"contentPlaybackContext\": {\"html5Preference\": \"HTML5_PREF_WANTS\"}}, \"racyCheckOk\" : true, \"videoId\" : \"" + videoId + "\"}";
-		}
+		postData = "{\"context\": {\"client\": {\"clientName\": \"ANDROID_VR\", \"clientVersion\": \"1.65.10\", "
+			"\"deviceMake\": \"Oculus\", \"deviceModel\": \"Quest 3\", \"hl\": \"" + lang + "\", "
+			"\"androidSdkVersion\": 32, \"osName\": \"Android\", \"osVersion\": \"12L\"}}, "
+			"\"videoId\": \"" + videoId + "\", \"params\": \"wgYCCAA=\", \"contentCheckOk\": true, \"racyCheckOk\": true}";
 	}
 
 	string visitorData = GetVisitorData(videoId, ytcfg);
@@ -1595,7 +1593,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		string player_response_jsonData, player_chapter_jsonData, player_sponsors_jsonData;
 		for (int i = 0; i < 2; i++)
 		{
-			string json = HostUrlDecode(GetVideoJson(videoId, ytcfg, i == 1));
+			string json = GetVideoJson(videoId, ytcfg, i == 1);
 
 			if (!json.empty())
 			{
