@@ -2,6 +2,9 @@
  Modified version of the default PotPlayer YouTube extension that adds [SponsorBlock](https://sponsor.ajay.app/) segments as Chapters.
 
  There's no support for submitting segments, as I don't know if it's even possible with the extension API. Help for this would be greatly appreciated.
+ 
+## Version v2
+Version v2 for older versions of Pot Player, for users who encounter the “HostDecodeSigUrl” error upon launch
 
 ## Installation
  Copy both the `.as` and the `.ico` files into the `Extension\Media\PlayParse` folder, by default located at `C:\Program Files\DAUM\PotPlayer`.
