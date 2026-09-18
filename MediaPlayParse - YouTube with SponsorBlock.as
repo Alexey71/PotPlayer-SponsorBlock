@@ -22,7 +22,7 @@ https://github.com/Alexey71/PotPlayer-SponsorBlock
 // string GetWebAccountDomain()							-> transport cookie domain for login
 //------------------------------------------------------------------------------------------------
 // bool PlayitemCheck(const string &in)					-> check playitem
-// array<dictionary> PlayitemParse(const string &in)	-> parse playitem
+// string PlayitemParse(const string &in)	-> parse playitem
 // void PlayitemCancel()								-> cancel playitem
 // bool PlaylistCheck(const string &in)					-> check playlist
 // array<dictionary> PlaylistParse(const string &in)	-> parse playlist
