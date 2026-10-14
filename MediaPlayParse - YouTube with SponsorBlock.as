@@ -724,6 +724,7 @@ class QualityListItem
 	double fps = 0.0;
 	int type3D = 0; // 1:sbs, 2:t&b
 	bool is360 = false;
+	bool is180 = false; // VR180(mesh 투영).
 	bool isHDR = false;
 	string audioName;
 	string audioCode;
@@ -744,6 +745,7 @@ class QualityListItem
 		ret["fps"] = fps;
 		ret["type3D"] = type3D;
 		ret["is360"] = is360;
+		ret["is180"] = is180;
 		ret["isHDR"] = isHDR;
 		ret["audioName"] = audioName;
 		ret["audioCode"] = audioCode;
@@ -1641,14 +1643,19 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 											MetaData["type3D"] = 3; 	// T&B Half
 											MetaData["is360"] = 1; // 360 VR
 										}
-										else if (type == 4)
+										else if (type == 4) // MESH: 유튜브는 VR180 을 mesh 투영으로 내려준다. 180 도 등장방형으로 재생한다.
 										{
+											MetaData["is360"] = 1;
+											MetaData["is180"] = 1;
 										}
 										int type3D;
 										if (MetaData.get("type3D", type3D)) item.type3D = type3D;
 
 										int is360;
 										if (MetaData.get("is360", is360)) item.is360 = is360 == 1;
+
+										int is180;
+										if (MetaData.get("is180", is180)) item.is180 = is180 == 1;
 									}
 									if (audioTrack.isObject())
 									{
@@ -1686,7 +1693,13 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 										if (videoId == "jj9RZODDDZs" && item.url.find("clen=") < 0) continue; // 특수한 경우 ㄷㄷㄷ
 										if (item.url.find("dur=0.000") > 0) continue;
 
-										if (item.url.find("xtags=vproj=mesh") > 0) MetaData["is360"] = 1;
+										if (item.url.find("xtags=vproj=mesh") > 0) // mesh 투영 = VR180.
+										{
+											MetaData["is360"] = 1;
+											MetaData["is180"] = 1;
+											item.is360 = true;
+											item.is180 = true;
+										}
 										item.isHDR = IsHDR(item.itag);
 										if (@QualityList !is null) AppendQualityList(QualityList, item, "");
 										if (SelectBestProfile(finalItag, finalExt, item.itag, youtubeSets)) finalUrl = item.url;
